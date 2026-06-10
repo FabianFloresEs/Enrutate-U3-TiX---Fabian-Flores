@@ -3,53 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ejemplo de Landing Base</title>
+    <title>Landing</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- HERO -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Prueba de cambio de título</h1>
-            <p>
-                Esta es una página web de ejemplo utilizando HTML, CSS y JavaScript.
-            </p>
-            <a href="#galeria" class="btn">Ver Galería</a>
-        </div>
-    </section>
+    <header class="site-header">
+        <a class="site-logo" href="#hero" aria-label="Ir al inicio">ENRÚTATE</a>
 
-    <!-- PARALLAX -->
-    <section class="parallax">
-        <div class="overlay">
-            <h2>Esto es un título 2</h2>
-        </div>
-    </section>
+        <nav class="site-nav" aria-label="Navegación principal">
+            <a href="#about">Acerca del Juego</a>
+            <a href="#gallery">Imágenes</a>
+            <a href="#pix">PiX</a>
+            <a href="#digital">Interpretación Digital</a>
+        </nav>
+    </header>
 
+    <main>
 
-    <!-- GALERÍA -->
-    <section id="galeria" class="galeria">
-        <h2>Galería</h2>
+        <!-- HERO -->
+        <section id="hero" class="hero-section">
 
-        <div class="grid">
-            <img src="assets/catapultazo.jpg" alt="">
-            <img src="assets/conectando.jpg" alt="">
-            <img src="assets/cuadriculando.png" alt="">
-            <img src="assets/daleforma.png" alt="">
-            <img src="assets/enlace.png" alt="">
-            <img src="assets/enrutate.png" alt="">
-            <img src="assets/polkup.png" alt="">
-            <img src="assets/zona.png" alt="">
-        </div>
-    </section>
+            <div class="hero-ring" aria-hidden="true">
+                <a class="hero-card hero-card--yellow" href="#about" data-section="Acerca del Juego">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">Acerca del Juego</span>
+                </a>
 
-    <!-- LIGHTBOX -->
-    <div class="lightbox" id="lightbox">
-        <span class="cerrar">&times;</span>
-        <img id="imagen-ampliada" src="" alt="">
-    </div>
+                <a class="hero-card hero-card--blue" href="#gallery" data-section="Imágenes">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">Imágenes</span>
+                </a>
+
+                <a class="hero-card hero-card--green" href="#pix" data-section="PiX">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">PiX</span>
+                </a>
+
+                <a class="hero-card hero-card--red" href="#digital" data-section="Interpretación Digital">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">Interpretación Digital</span>
+                </a>
+
+                <a class="hero-card hero-card--yellow" href="#about" data-section="Acerca del Juego">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">Acerca del Juego</span>
+                </a>
+
+                <a class="hero-card hero-card--blue" href="#gallery" data-section="Imágenes">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">Imágenes</span>
+                </a>
+
+                <a class="hero-card hero-card--green" href="#pix" data-section="PiX">
+                    <span class="hero-card__shape"></span>
+                    <span class="hero-card__label">PiX</span>
+                </a>
+            </div>
+
+            <div class="hero-center">
+                <h1>ENRÚTATE</h1>
+                <p>Un juego de azar, avanzar y conseguir puntos</p>
+            </div>
+
+        </section>
+
+        <!-- ACERCA DEL JUEGO -->
+        <section id="about" class="content-section">
+            <div class="section-heading">
+                <span class="section-node section-node--green"></span>
+                <h2>Acerca del Juego</h2>
+            </div>
+
+            <div class="carousel" aria-label="Contenido acerca del juego">
+                <button class="carousel-button carousel-button--prev" type="button" aria-label="Anterior">
+                    ←
+                </button>
+
+                <div class="carousel-viewport">
+                    <div class="carousel-track">
+
+                        <article class="carousel-slide">
+                            <h3>Objetivo</h3>
+                            <p>
+                                Ser el primero en acumular 10 pts. recorriendo el tablero y posicionarse de vuelta en el centro del tablero.
+                                ¡Debes tener cuidado de no perder tus puntos antes de regresar al centro!
+                            </p>
+                            <p>Para ello el tablero está compuesto de la siguiente forma:</p>
+                            <ul>
+                                <li>Un centro como punto de partida y de final.</li>
+                                <li>Diversas rutas periféricas al centro, que conducen a casillas especiales.</li>
+                                <li>Obtener puntos en las casillas de bonificación.</li>
+                                <li>Ser herido o lastimar a otro jugador por sus puntos en las casillas malvadas.</li>
+                                <li>Interactuar con el tablero para beneficiarse o perjudicar a otro en las casillas de modificación.</li>
+                            </ul>
+                        </article>
+
+                        <article class="carousel-slide">
+                            <h3>Cómo preparar el juego</h3>
+                            <!-- [imagen] -->
+                            <figure class="slide-media">
+                                <img src="" alt="Imagen del preparado del juego">
+                            </figure>
+                            <p>
+                                Debes separar las cartas por color para luego barajar cada mazo por separado.
+                                Posicionándolos en su respectivo lugar del tablero.
+                            </p>
+                            <p>
+                                Cada jugador elegirá su pieza representante e insertándola en una casilla amarilla de inicio.
+                            </p>
+                        </article>
+
+                        <article class="carousel-slide">
+                            <h3>Cómo avanzar</h3>
+                            <p>
+                                Cada jugador/a a lo largo de la partida, debe avanzar tres pasos en las casillas.
+                                Cuando llegues a tu última casilla en cada turno, deberás sacar una carta del mismo color de la casilla en la que terminaste.
+                            </p>
+                            <p>
+                                Considera además que no puedes retroceder y que siempre debes tomar el camino más cercano a la casilla donde partes.
+                            </p>
+                            <!-- [imagen] -->
+                            <figure class="slide-media">
+                                <img src="" alt="Imagen de avance en el tablero">
+                            </figure>
+                        </article>
+
+                        <article class="carousel-slide">
+                            <h3>Tipos de Casillas y sus Cartas</h3>
+                            <!-- [imagen] -->
+                            <figure class="slide-media">
+                                <img src="" alt="Imagen de tipos de casillas y cartas">
+                            </figure>
+                        </article>
+
+                        <article class="carousel-slide">
+                            <h3>Tipos de Cartas: Bonificación</h3>
+                            <!-- [imagen] -->
+                            <figure class="slide-media">
+                                <img src="" alt="Imagen de cartas de bonificación">
+                            </figure>
+                        </article>
+
+                        <article class="carousel-slide">
+                            <h3>Tipos de Cartas: Malvadas</h3>
+                            <!-- [imagen] -->
+                            <figure class="slide-media">
+                                <img src="" alt="Imagen de cartas malvadas">
+                            </figure>
+                        </article>
+
+                        <article class="carousel-slide">
+                            <h3>Tipos de Cartas: Modificación</h3>
+                            <!-- [imagen] -->
+                            <figure class="slide-media">
+                                <img src="" alt="Imagen de cartas de modificación">
+                            </figure>
+                        </article>
+
+                    </div>
+                </div>
+
+                <button class="carousel-button carousel-button--next" type="button" aria-label="Siguiente">
+                    →
+                </button>
+            </div>
+        </section>
+
+        <!-- IMÁGENES -->
+        <section id="gallery" class="content-section">
+            <div class="section-heading">
+                <span class="section-node section-node--blue"></span>
+                <h2>Imágenes</h2>
+            </div>
+
+            <div class="gallery-grid">
+                <!-- Placeholder para imágenes del juego -->
+                <figure class="gallery-item">
+                    <img src="" alt="Imagen 1 del juego">
+                </figure>
+                <figure class="gallery-item">
+                    <img src="" alt="Imagen 2 del juego">
+                </figure>
+                <figure class="gallery-item">
+                    <img src="" alt="Imagen 3 del juego">
+                </figure>
+            </div>
+        </section>
+
+        <!-- PIX -->
+        <section id="pix" class="content-section">
+            <div class="section-heading">
+                <span class="section-node section-node--green"></span>
+                <h2>PiX</h2>
+            </div>
+
+            <div class="pix-layout">
+                <figure class="pix-image">
+                    <!-- Placeholder para la PiX -->
+                    <img src="" alt="Partitura de interacción PiX">
+                </figure>
+
+                <div class="pix-text">
+                    <p>
+                        <!-- Texto breve por definir -->
+                        La partitura de interacción organiza la experiencia de juego en secuencias que permiten observar cómo se conectan acciones, decisiones y reglas.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERPRETACIÓN DIGITAL -->
+        <section id="digital" class="content-section">
+            <div class="section-heading">
+                <span class="section-node section-node--yellow"></span>
+                <h2>Interpretación Digital</h2>
+            </div>
+
+            <div class="digital-text">
+                <p>
+                    Este proyecto nace del análisis de la partitura de interacción final de la Unidad 2, donde se observaron dinámicas asociadas al descubrimiento progresivo y la transformación constante de los recorridos.
+                </p>
+
+                <p>
+                    Más que representar literalmente el juego de mesa, la propuesta busca explorar cómo una experiencia puede cambiar a medida que se comprenden sus reglas y posibilidades. El objetivo es trasladar estas cualidades a una interfaz digital centrada en el movimiento, la reorganización del contenido y la aparición gradual de nuevas formas de recorrer el espacio.
+                </p>
+            </div>
+
+            <div class="digital-wireframes">
+                <!-- Placeholder para wireframe Landing -->
+                <!-- Placeholder para wireframe de Experimentación -->
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <p>Enrútate · Taller Interfaces Digitales Expresivas</p>
+    </footer>
 
     <script src="script.js"></script>
-
 </body>
 </html>
