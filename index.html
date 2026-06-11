@@ -3,243 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing</title>
+    <title>Enrútate</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header class="site-header">
-        <a class="site-logo" href="#hero" aria-label="Ir al inicio">ENRÚTATE</a>
+    <!-- ========================= -->
+    <!-- HERO -->
+    <!-- ========================= -->
 
-        <nav class="site-nav" aria-label="Navegación principal">
-            <a href="#about">Acerca del Juego</a>
-            <a href="#gallery">Imágenes</a>
-            <a href="#pix">PiX</a>
-            <a href="#digital">Interpretación Digital</a>
-        </nav>
+    <header class="hero" id="hero">
+
+        <div class="hero-board" aria-hidden="true">
+
+            <!-- Caminos y casillas decorativas -->
+            <div class="tile tile-deco deco-1"></div>
+            <div class="tile tile-deco deco-2"></div>
+            <div class="tile tile-deco deco-3"></div>
+            <div class="tile tile-deco deco-4"></div>
+            <div class="tile tile-deco deco-5"></div>
+            <div class="tile tile-deco deco-6"></div>
+            <div class="tile tile-deco deco-7 red"></div>
+            <div class="tile tile-deco deco-8"></div>
+            <div class="tile tile-deco deco-9"></div>
+            <div class="tile tile-deco deco-10"></div>
+            <div class="tile tile-deco deco-11"></div>
+            <div class="tile tile-deco deco-12"></div>
+            <div class="tile tile-deco deco-13"></div>
+            <div class="tile tile-deco deco-14"></div>
+            <div class="tile tile-deco deco-15"></div>
+            <div class="tile tile-deco deco-16 red"></div>
+            <div class="tile tile-deco deco-17"></div>
+            <div class="tile tile-deco deco-18"></div>
+            <div class="tile tile-deco deco-19"></div>
+            <div class="tile tile-deco deco-20"></div>
+            <div class="tile tile-deco deco-21"></div>
+            <div class="tile tile-deco deco-22"></div>
+
+            <!-- Casillas navegables -->
+            <a href="#galeria" class="tile tile-nav blue nav-galeria">
+                <span class="tile-label">Galería</span>
+            </a>
+
+            <a href="#acerca" class="tile tile-nav green nav-acerca">
+                <span class="tile-label">Acerca del Juego</span>
+            </a>
+
+            <a href="#pix" class="tile tile-nav red nav-pix">
+                <span class="tile-label">PiX</span>
+            </a>
+
+            <a href="#interpretacion" class="tile tile-nav yellow nav-interpretacion">
+                <span class="tile-label">Interpretación Digital</span>
+            </a>
+
+        </div>
+
+        <div class="hero-content">
+            <h1>ENRÚTATE</h1>
+            <h2>Un juego de azar, avanzar<br>y conseguir puntos</h2>
+        </div>
+
     </header>
 
-    <main>
+    <!-- ========================= -->
+    <!-- INTRODUCCIÓN -->
+    <!-- ========================= -->
 
-        <!-- HERO -->
-        <section id="hero" class="hero-section">
+    <section class="intro">
 
-            <div class="hero-ring" aria-hidden="true">
-                <a class="hero-card hero-card--yellow" href="#about" data-section="Acerca del Juego">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">Acerca del Juego</span>
-                </a>
+        <div class="intro-container">
+            <p>
+                Enrútate es un juego dinámico para 3 a 6 jugadores, diseñado para encontrar diversión en cada recorrido del tablero. En partidas de aproximadamente 20 a 35 minutos, los jugadores avanzan consiguiendo puntos para poder coronarse en el centro como ganador.
+            </p>
 
-                <a class="hero-card hero-card--blue" href="#gallery" data-section="Imágenes">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">Imágenes</span>
-                </a>
+            <p>
+                Durante la partida, cada decisión puede cambiar el rumbo del juego: perder puntos, quedar sin una ruta de regreso o mover el tablero en el momento preciso puede transformar completamente la experiencia. Los jugadores deberán planificar sus recorridos, adaptarse a los cambios y mantenerse atentos para no quedar fuera de camino.
+            </p>
 
-                <a class="hero-card hero-card--green" href="#pix" data-section="PiX">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">PiX</span>
-                </a>
+            <p>
+                Con una dinámica rápida y cambiante, Enrútate fomenta la interacción, la estrategia y la improvisación entre todos los jugadores, convirtiendo cada partida en una experiencia distinta.
+            </p>
 
-                <a class="hero-card hero-card--red" href="#digital" data-section="Interpretación Digital">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">Interpretación Digital</span>
-                </a>
+            <p class="intro-highlight">
+                ¡Aprovecha de mover el tablero y encuentra tu ruta hacia la victoria!
+            </p>
+        </div>
 
-                <a class="hero-card hero-card--yellow" href="#about" data-section="Acerca del Juego">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">Acerca del Juego</span>
-                </a>
+    </section>
 
-                <a class="hero-card hero-card--blue" href="#gallery" data-section="Imágenes">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">Imágenes</span>
-                </a>
+    <!-- ========================= -->
+    <!-- GALERÍA -->
+    <!-- ========================= -->
 
-                <a class="hero-card hero-card--green" href="#pix" data-section="PiX">
-                    <span class="hero-card__shape"></span>
-                    <span class="hero-card__label">PiX</span>
-                </a>
-            </div>
+    <section id="galeria" class="section">
 
-            <div class="hero-center">
-                <h1>ENRÚTATE</h1>
-                <p>Un juego de azar, avanzar y conseguir puntos</p>
-            </div>
+        <div class="section-heading section-heading--blue">
+            <span class="section-node section-node--blue"></span>
+            <h2>Galería</h2>
+        </div>
 
-        </section>
+        <div class="gallery">
 
-        <!-- ACERCA DEL JUEGO -->
-        <section id="about" class="content-section">
-            <div class="section-heading">
-                <span class="section-node section-node--green"></span>
-                <h2>Acerca del Juego</h2>
-            </div>
+            <figure class="gallery-item">
+                <img src="galeria.01.CajaEnrútate.png" alt="Caja de Enrútate">
+            </figure>
 
-            <div class="carousel" aria-label="Contenido acerca del juego">
-                <button class="carousel-button carousel-button--prev" type="button" aria-label="Anterior">
-                    ←
-                </button>
+            <figure class="gallery-item">
+                <img src="galeria.02.ContenidoJuego.png" alt="Contenido del juego">
+            </figure>
 
-                <div class="carousel-viewport">
-                    <div class="carousel-track">
+            <figure class="gallery-item">
+                <img src="galeria.03.Tablero.png" alt="Tablero de Enrútate">
+            </figure>
 
-                        <article class="carousel-slide">
-                            <h3>Objetivo</h3>
-                            <p>
-                                Ser el primero en acumular 10 pts. recorriendo el tablero y posicionarse de vuelta en el centro del tablero.
-                                ¡Debes tener cuidado de no perder tus puntos antes de regresar al centro!
-                            </p>
-                            <p>Para ello el tablero está compuesto de la siguiente forma:</p>
-                            <ul>
-                                <li>Un centro como punto de partida y de final.</li>
-                                <li>Diversas rutas periféricas al centro, que conducen a casillas especiales.</li>
-                                <li>Obtener puntos en las casillas de bonificación.</li>
-                                <li>Ser herido o lastimar a otro jugador por sus puntos en las casillas malvadas.</li>
-                                <li>Interactuar con el tablero para beneficiarse o perjudicar a otro en las casillas de modificación.</li>
-                            </ul>
-                        </article>
+        </div>
 
-                        <article class="carousel-slide">
-                            <h3>Cómo preparar el juego</h3>
-                            <!-- [imagen] -->
-                            <figure class="slide-media">
-                                <img src="" alt="Imagen del preparado del juego">
-                            </figure>
-                            <p>
-                                Debes separar las cartas por color para luego barajar cada mazo por separado.
-                                Posicionándolos en su respectivo lugar del tablero.
-                            </p>
-                            <p>
-                                Cada jugador elegirá su pieza representante e insertándola en una casilla amarilla de inicio.
-                            </p>
-                        </article>
+    </section>
 
-                        <article class="carousel-slide">
-                            <h3>Cómo avanzar</h3>
-                            <p>
-                                Cada jugador/a a lo largo de la partida, debe avanzar tres pasos en las casillas.
-                                Cuando llegues a tu última casilla en cada turno, deberás sacar una carta del mismo color de la casilla en la que terminaste.
-                            </p>
-                            <p>
-                                Considera además que no puedes retroceder y que siempre debes tomar el camino más cercano a la casilla donde partes.
-                            </p>
-                            <!-- [imagen] -->
-                            <figure class="slide-media">
-                                <img src="" alt="Imagen de avance en el tablero">
-                            </figure>
-                        </article>
+    <!-- ========================= -->
+    <!-- ACERCA DEL JUEGO -->
+    <!-- ========================= -->
 
-                        <article class="carousel-slide">
-                            <h3>Tipos de Casillas y sus Cartas</h3>
-                            <!-- [imagen] -->
-                            <figure class="slide-media">
-                                <img src="" alt="Imagen de tipos de casillas y cartas">
-                            </figure>
-                        </article>
+    <section id="acerca" class="section">
 
-                        <article class="carousel-slide">
-                            <h3>Tipos de Cartas: Bonificación</h3>
-                            <!-- [imagen] -->
-                            <figure class="slide-media">
-                                <img src="" alt="Imagen de cartas de bonificación">
-                            </figure>
-                        </article>
+        <div class="section-heading section-heading--green">
+            <span class="section-node section-node--green"></span>
+            <h2>Acerca del Juego</h2>
+        </div>
 
-                        <article class="carousel-slide">
-                            <h3>Tipos de Cartas: Malvadas</h3>
-                            <!-- [imagen] -->
-                            <figure class="slide-media">
-                                <img src="" alt="Imagen de cartas malvadas">
-                            </figure>
-                        </article>
+        <div class="carousel-container">
 
-                        <article class="carousel-slide">
-                            <h3>Tipos de Cartas: Modificación</h3>
-                            <!-- [imagen] -->
-                            <figure class="slide-media">
-                                <img src="" alt="Imagen de cartas de modificación">
-                            </figure>
-                        </article>
+            <button class="carousel-btn prev" aria-label="Anterior">
+                &#10094;
+            </button>
 
-                    </div>
+            <div class="carousel-window">
+
+                <div class="carousel-track">
+
+                    <article class="carousel-slide active">
+                        <h3>Objetivo</h3>
+                        <p>
+                            Ser el primero en acumular 10 pts. recorriendo el tablero y posicionarse de vuelta en el centro del tablero.
+                            ¡Debes tener cuidado de no perder tus puntos antes de regresar al centro!
+                        </p>
+
+                        <p>Para ello el tablero está compuesto de la siguiente forma:</p>
+
+                        <ul>
+                            <li>Un centro como punto de partida y de final.</li>
+                            <li>Diversas rutas periféricas al centro, que conducen a casillas especiales.</li>
+                            <li>Obtener puntos en las casillas de bonificación.</li>
+                            <li>Ser herido o lastimar a otro jugador por sus puntos en las casillas malvadas.</li>
+                            <li>Interactuar con el tablero para beneficiarse o perjudicar a otro en las casillas de modificación.</li>
+                        </ul>
+                    </article>
+
+                    <article class="carousel-slide">
+                        <h3>Cómo preparar el juego</h3>
+                        <figure class="slide-image">
+                            <img src="A.Juego.01.PrepararTablero.png" alt="Cómo preparar el juego">
+                        </figure>
+
+                        <p>
+                            Debes separar las cartas por color para luego barajar cada mazo por separado.
+                            Posiciónalos en su respectivo lugar del tablero.
+                        </p>
+
+                        <p>
+                            Cada jugador elegirá su pieza representante e iniciará desde una casilla amarilla.
+                        </p>
+                    </article>
+
+                    <article class="carousel-slide">
+                        <h3>Cómo avanzar</h3>
+                        <figure class="slide-image">
+                            <img src="A.Juego.02.Avanzar.png" alt="Cómo avanzar">
+                        </figure>
+
+                        <p>
+                            Cada jugador debe avanzar tres pasos por turno.
+                        </p>
+
+                        <p>
+                            Al terminar, deberá sacar una carta del color correspondiente.
+                        </p>
+
+                        <p>
+                            No se puede retroceder y siempre se debe escoger el camino más cercano.
+                        </p>
+                    </article>
+
+                    <article class="carousel-slide">
+                        <h3>Tipos de Casillas y sus Cartas</h3>
+                        <figure class="slide-image">
+                            <img src="A.Juego.03.CasillasYcartas.png" alt="Tipos de casillas y sus cartas">
+                        </figure>
+                    </article>
+
+                    <article class="carousel-slide">
+                        <h3>Tipos de Cartas: Bonificación</h3>
+                        <figure class="slide-image">
+                            <img src="A.Juego.04.CartasBonificacion.png" alt="Cartas de bonificación">
+                        </figure>
+                    </article>
+
+                    <article class="carousel-slide">
+                        <h3>Tipos de Cartas: Malvadas</h3>
+                        <figure class="slide-image">
+                            <img src="A.Juego.05.CartasMalvadas.png" alt="Cartas malvadas">
+                        </figure>
+                    </article>
+
+                    <article class="carousel-slide">
+                        <h3>Tipos de Cartas: Modificación</h3>
+                        <figure class="slide-image">
+                            <img src="A.Juego.06.CartasModificacion.png" alt="Cartas de modificación">
+                        </figure>
+                    </article>
+
                 </div>
 
-                <button class="carousel-button carousel-button--next" type="button" aria-label="Siguiente">
-                    →
-                </button>
-            </div>
-        </section>
-
-        <!-- IMÁGENES -->
-        <section id="gallery" class="content-section">
-            <div class="section-heading">
-                <span class="section-node section-node--blue"></span>
-                <h2>Imágenes</h2>
             </div>
 
-            <div class="gallery-grid">
-                <!-- Placeholder para imágenes del juego -->
-                <figure class="gallery-item">
-                    <img src="" alt="Imagen 1 del juego">
-                </figure>
-                <figure class="gallery-item">
-                    <img src="" alt="Imagen 2 del juego">
-                </figure>
-                <figure class="gallery-item">
-                    <img src="" alt="Imagen 3 del juego">
-                </figure>
-            </div>
-        </section>
+            <button class="carousel-btn next" aria-label="Siguiente">
+                &#10095;
+            </button>
 
-        <!-- PIX -->
-        <section id="pix" class="content-section">
-            <div class="section-heading">
-                <span class="section-node section-node--green"></span>
-                <h2>PiX</h2>
-            </div>
+        </div>
 
-            <div class="pix-layout">
-                <figure class="pix-image">
-                    <!-- Placeholder para la PiX -->
-                    <img src="" alt="Partitura de interacción PiX">
-                </figure>
+    </section>
 
-                <div class="pix-text">
-                    <p>
-                        <!-- Texto breve por definir -->
-                        La partitura de interacción organiza la experiencia de juego en secuencias que permiten observar cómo se conectan acciones, decisiones y reglas.
-                    </p>
-                </div>
-            </div>
-        </section>
+    <!-- ========================= -->
+    <!-- PIX -->
+    <!-- ========================= -->
 
-        <!-- INTERPRETACIÓN DIGITAL -->
-        <section id="digital" class="content-section">
-            <div class="section-heading">
-                <span class="section-node section-node--yellow"></span>
-                <h2>Interpretación Digital</h2>
-            </div>
+    <section id="pix" class="section">
 
-            <div class="digital-text">
-                <p>
-                    Este proyecto nace del análisis de la partitura de interacción final de la Unidad 2, donde se observaron dinámicas asociadas al descubrimiento progresivo y la transformación constante de los recorridos.
-                </p>
+        <div class="section-heading section-heading--red">
+            <span class="section-node section-node--red"></span>
+            <h2>PiX</h2>
+        </div>
 
-                <p>
-                    Más que representar literalmente el juego de mesa, la propuesta busca explorar cómo una experiencia puede cambiar a medida que se comprenden sus reglas y posibilidades. El objetivo es trasladar estas cualidades a una interfaz digital centrada en el movimiento, la reorganización del contenido y la aparición gradual de nuevas formas de recorrer el espacio.
-                </p>
-            </div>
+        <div class="pix-container">
+            <img src="pix-final.png" alt="PiX Final de Enrútate">
+        </div>
 
-            <div class="digital-wireframes">
-                <!-- Placeholder para wireframe Landing -->
-                <!-- Placeholder para wireframe de Experimentación -->
-            </div>
-        </section>
+    </section>
 
-    </main>
+    <!-- ========================= -->
+    <!-- INTERPRETACIÓN DIGITAL -->
+    <!-- ========================= -->
+
+    <section id="interpretacion" class="section">
+
+        <div class="section-heading section-heading--yellow">
+            <span class="section-node section-node--yellow"></span>
+            <h2>Interpretación Digital</h2>
+        </div>
+
+        <div class="interpretacion-texto">
+
+            <p>
+                Este proyecto nace del análisis de la partitura de interacción final de la Unidad 2, donde se observaron dinámicas asociadas al descubrimiento progresivo y la transformación constante de los recorridos.
+            </p>
+
+            <p>
+                Más que representar literalmente el juego de mesa, la propuesta busca explorar cómo una experiencia puede cambiar a medida que se comprenden sus reglas y posibilidades. El objetivo es trasladar estas cualidades a una interfaz digital centrada en el movimiento, la reorganización del contenido y la aparición gradual de nuevas formas de recorrer el espacio.
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- CTA FINAL -->
+    <!-- ========================= -->
+
+    <section class="final-cta">
+
+        <a class="final-cta-button" href="#" target="_blank" rel="noopener noreferrer">
+            Mira la experimentación digital del juego
+        </a>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- COLOFÓN -->
+    <!-- ========================= -->
 
     <footer class="site-footer">
-        <p>Enrútate · Taller Interfaces Digitales Expresivas</p>
+
+        <div class="footer-logos">
+            <div class="footer-logo-placeholder"></div>
+            <div class="footer-logo-placeholder"></div>
+        </div>
+
+        <div class="footer-text">
+            <p>
+                La presente página fue elaborada por Fabián Flores Estay, para el Taller de Diseño de Interacción.
+                Se elaboró a partir del juego de mesa Enrútate, creado para el mismo taller.
+            </p>
+
+            <p>
+                Escuela de Arquitectura y Diseño, Pontificia Universidad Católica de Valparaíso.
+            </p>
+
+            <p>
+                Junio de 2026.
+            </p>
+        </div>
+
     </footer>
 
     <script src="script.js"></script>
