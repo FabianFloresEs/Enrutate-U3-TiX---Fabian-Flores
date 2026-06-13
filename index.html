@@ -8,63 +8,54 @@
 </head>
 <body>
 
-    <!-- ========================= -->
-    <!-- HERO -->
-    <!-- ========================= -->
+<header class="hero" id="hero">
 
-    <header class="hero" id="hero">
+    <!-- Fondo dinámico del Hero -->
+    <div class="hero-board" aria-hidden="true">
 
-        <div class="hero-board" aria-hidden="true">
+        <div class="hero-pattern" id="heroPattern"></div>
 
-            <!-- Caminos y casillas decorativas -->
-            <div class="tile tile-deco deco-1"></div>
-            <div class="tile tile-deco deco-2"></div>
-            <div class="tile tile-deco deco-3"></div>
-            <div class="tile tile-deco deco-4"></div>
-            <div class="tile tile-deco deco-5"></div>
-            <div class="tile tile-deco deco-6"></div>
-            <div class="tile tile-deco deco-7 red"></div>
-            <div class="tile tile-deco deco-8"></div>
-            <div class="tile tile-deco deco-9"></div>
-            <div class="tile tile-deco deco-10"></div>
-            <div class="tile tile-deco deco-11"></div>
-            <div class="tile tile-deco deco-12"></div>
-            <div class="tile tile-deco deco-13"></div>
-            <div class="tile tile-deco deco-14"></div>
-            <div class="tile tile-deco deco-15"></div>
-            <div class="tile tile-deco deco-16 red"></div>
-            <div class="tile tile-deco deco-17"></div>
-            <div class="tile tile-deco deco-18"></div>
-            <div class="tile tile-deco deco-19"></div>
-            <div class="tile tile-deco deco-20"></div>
-            <div class="tile tile-deco deco-21"></div>
-            <div class="tile tile-deco deco-22"></div>
+    </div>
 
-            <!-- Casillas navegables -->
-            <a href="#galeria" class="tile tile-nav blue nav-galeria">
-                <span class="tile-label">Galería</span>
-            </a>
+    <!-- Casillas navegables -->
+    <div class="hero-section-nav">
 
-            <a href="#acerca" class="tile tile-nav green nav-acerca">
-                <span class="tile-label">Acerca del Juego</span>
-            </a>
+        <a href="#galeria" class="tile tile-nav blue nav-galeria">
+            <span class="tile-label">Galería</span>
+        </a>
 
-            <a href="#pix" class="tile tile-nav red nav-pix">
-                <span class="tile-label">PiX</span>
-            </a>
+        <span class="path-dots"></span>
 
-            <a href="#interpretacion" class="tile tile-nav yellow nav-interpretacion">
-                <span class="tile-label">Interpretación Digital</span>
-            </a>
+        <a href="#acerca" class="tile tile-nav green nav-acerca">
+            <span class="tile-label">Acerca del Juego</span>
+        </a>
 
-        </div>
+        <span class="path-dots"></span>
 
-        <div class="hero-content">
-            <h1>ENRÚTATE</h1>
-            <h2>Un juego de azar, avanzar<br>y conseguir puntos</h2>
-        </div>
+        <a href="#pix" class="tile tile-nav red nav-pix">
+            <span class="tile-label">PiX</span>
+        </a>
 
-    </header>
+        <span class="path-dots"></span>
+
+        <a href="#interpretacion" class="tile tile-nav yellow nav-interpretacion">
+            <span class="tile-label">Interpretación Digital</span>
+        </a>
+
+    </div>
+
+    <!-- Contenido central -->
+    <div class="hero-content">
+
+        <button type="button" class="hero-logo-button" id="heroLogoButton" aria-label="Regenerar patrón del Hero">
+            <img src="assets/logo-enrutate.svg" alt="Enrútate" class="hero-logo-img">
+        </button>
+
+        <h2>Un juego de azar, avanzar<br>y conseguir puntos</h2>
+
+    </div>
+
+</header>
 
     <!-- ========================= -->
     <!-- INTRODUCCIÓN -->
@@ -106,15 +97,15 @@
         <div class="gallery">
 
             <figure class="gallery-item">
-                <img src="galeria.01.CajaEnrútate.png" alt="Caja de Enrútate">
+                <img src="assets/galeria.01.CajaEnrútate.png" alt="Caja de Enrútate">
             </figure>
 
             <figure class="gallery-item">
-                <img src="galeria.02.ContenidoJuego.png" alt="Contenido del juego">
+                <img src="assets/galeria.02.ContenidoJuego.png" alt="Contenido del juego">
             </figure>
 
             <figure class="gallery-item">
-                <img src="galeria.03.Tablero.png" alt="Tablero de Enrútate">
+                <img src="assets/galeria.03.Tablero.png" alt="Tablero de Enrútate">
             </figure>
 
         </div>
@@ -163,7 +154,7 @@
                     <article class="carousel-slide">
                         <h3>Cómo preparar el juego</h3>
                         <figure class="slide-image">
-                            <img src="A.Juego.01.PrepararTablero.png" alt="Cómo preparar el juego">
+                            <img src="assets/A.Juego.01.PrepararTablero.png" alt="Cómo preparar el juego">
                         </figure>
 
                         <p>
@@ -179,7 +170,7 @@
                     <article class="carousel-slide">
                         <h3>Cómo avanzar</h3>
                         <figure class="slide-image">
-                            <img src="A.Juego.02.Avanzar.png" alt="Cómo avanzar">
+                            <img src="assets/A.Juego.02.Avanzar.png" alt="Cómo avanzar">
                         </figure>
 
                         <p>
@@ -198,28 +189,28 @@
                     <article class="carousel-slide">
                         <h3>Tipos de Casillas y sus Cartas</h3>
                         <figure class="slide-image">
-                            <img src="A.Juego.03.CasillasYcartas.png" alt="Tipos de casillas y sus cartas">
+                            <img src="assets/A.Juego.03.CasillasYcartas.png" alt="Tipos de casillas y sus cartas">
                         </figure>
                     </article>
 
                     <article class="carousel-slide">
                         <h3>Tipos de Cartas: Bonificación</h3>
                         <figure class="slide-image">
-                            <img src="A.Juego.04.CartasBonificacion.png" alt="Cartas de bonificación">
+                            <img src="assets/A.Juego.04.CartasBonificacion.png" alt="Cartas de bonificación">
                         </figure>
                     </article>
 
                     <article class="carousel-slide">
                         <h3>Tipos de Cartas: Malvadas</h3>
                         <figure class="slide-image">
-                            <img src="A.Juego.05.CartasMalvadas.png" alt="Cartas malvadas">
+                            <img src="assets/A.Juego.05.CartasMalvadas.png" alt="Cartas malvadas">
                         </figure>
                     </article>
 
                     <article class="carousel-slide">
                         <h3>Tipos de Cartas: Modificación</h3>
                         <figure class="slide-image">
-                            <img src="A.Juego.06.CartasModificacion.png" alt="Cartas de modificación">
+                            <img src="assets/A.Juego.06.CartasModificacion.png" alt="Cartas de modificación">
                         </figure>
                     </article>
 
@@ -247,7 +238,7 @@
         </div>
 
         <div class="pix-container">
-            <img src="pix-final.png" alt="PiX Final de Enrútate">
+            <img src="assets/pix-final.png" alt="PiX Final de Enrútate">
         </div>
 
     </section>

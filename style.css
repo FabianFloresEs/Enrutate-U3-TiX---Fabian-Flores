@@ -51,7 +51,7 @@ body{
     display:flex;
     justify-content:center;
     align-items:center;
-    overflow:hidden;
+    overflow:visible;
 }
 
 /* ================================= */
@@ -62,7 +62,86 @@ body{
     position:absolute;
     inset:0;
     width:100%;
+    height:calc(100% + 220px);
+    z-index:1;
+    pointer-events:none;
+    overflow:hidden;
+}
+
+/* ================================= */
+/* FONDO DINÁMICO HERO */
+/* ================================= */
+
+.hero-board{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:calc(100% + 220px);
+    z-index:1;
+    pointer-events:none;
+    overflow:hidden;
+}
+
+.hero-board::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:300px;
+
+    background:linear-gradient(
+        to bottom,
+        rgba(236,236,236,0) 0%,
+        rgba(236,236,236,0.45) 42%,
+        rgba(236,236,236,0.85) 72%,
+        #ECECEC 100%
+    );
+
+    z-index:3;
+    pointer-events:none;
+}
+
+.hero-pattern{
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
     height:100%;
+
+    z-index:1;
+
+    background-repeat:no-repeat;
+    background-position:center top;
+    background-size:cover;
+
+    opacity:0;
+
+    transition:
+        opacity .45s ease,
+        filter .45s ease;
+
+    will-change:opacity, filter, mask-image, -webkit-mask-image;
+}
+
+/* visible mientras se revela con el mouse */
+.hero.is-revealing .hero-pattern{
+    opacity:1;
+}
+
+/* Mientras cambia el patrón */
+.hero.is-changing .hero-pattern{
+    opacity:0;
+    filter:blur(10px);
+}
+
+/* Flash inicial o al apretar el logo */
+.hero.is-flashing .hero-pattern{
+    opacity:1;
+    filter:blur(0);
+
+    -webkit-mask-image:none !important;
+    mask-image:none !important;
 }
 
 /* ================================= */
@@ -70,20 +149,16 @@ body{
 /* ================================= */
 
 .hero-content{
-    position:relative;
-    z-index:50;
+    position:absolute;
+    left:50%;
+    top:42%;
+    transform:translate(-50%, -50%);
+    z-index:80;
     text-align:center;
     display:flex;
     flex-direction:column;
     align-items:center;
-}
-
-.hero-content h1{
-    font-size:6rem;
-    font-weight:700;
-    color:var(--yellow);
-    letter-spacing:2px;
-    margin-bottom:15px;
+    pointer-events:auto;
 }
 
 .hero-content h2{
@@ -92,6 +167,34 @@ body{
     font-weight:500;
     line-height:1.5;
     color:var(--green);
+    margin-top:18px;
+}
+
+/* ================================= */
+/* LOGO HERO */
+/* ================================= */
+
+.hero-logo-button{
+    background:none;
+    border:none;
+    padding:0;
+    cursor:pointer;
+    display:block;
+    z-index:90;
+    transition:
+        transform .3s ease,
+        filter .3s ease;
+}
+
+.hero-logo-button:hover{
+    transform:scale(1.025);
+    filter:brightness(1.03);
+}
+
+.hero-logo-img{
+    width:min(760px,78vw);
+    height:auto;
+    display:block;
 }
 
 /* ================================= */
@@ -99,9 +202,10 @@ body{
 /* ================================= */
 
 .tile{
+
     position:absolute;
-    width:50px;
-    height:50px;
+    width:65px;
+    height:65px;
     background:var(--yellow-soft);
     clip-path:polygon(
         30% 0%,
@@ -113,6 +217,8 @@ body{
         0% 70%,
         0% 30%
     );
+
+    transition:background-color .3s ease;
 }
 
 /* ================================= */
@@ -122,8 +228,8 @@ body{
 .tile::after{
     content:"";
     position:absolute;
-    width:18px;
-    height:18px;
+    width:24px;
+    height:24px;
     background:#ECECEC;
     border-radius:50%;
     top:50%;
@@ -167,6 +273,41 @@ body{
 
 .tile-deco{
     opacity:.95;
+
+    z-index:5;
+
+    cursor:pointer;
+
+    transition:
+        background-color .3s ease,
+        opacity .3s ease;
+}
+
+/* Cambio de color al pasar el mouse */
+/* No se agrandan, solo cambian de color */
+
+.tile-deco:hover{
+    background:var(--blue);
+}
+
+/* Variaciones para que no todas cambien al mismo color */
+
+.tile-deco:nth-child(3n):hover{
+    background:var(--green);
+}
+
+.tile-deco:nth-child(4n):hover{
+    background:var(--yellow);
+}
+
+.tile-deco:nth-child(5n):hover{
+    background:var(--red);
+}
+
+/* Si la casilla decorativa es estrella roja, mantiene rojo */
+
+.tile-deco.red:hover{
+    background:var(--red);
 }
 
 /* ================================= */
@@ -174,34 +315,130 @@ body{
 /* ================================= */
 
 .tile-nav{
+
     width:75px;
     height:75px;
+
     z-index:100;
+
     cursor:pointer;
-    transition:
-        background-color .3s ease,
-        transform .3s ease;
+
+    background:transparent;
+
+    clip-path:none;
+
+    overflow:visible;
+
+    transition:transform .3s ease;
+}
+
+/* Forma visible de la casilla navegable */
+
+.tile-nav::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:var(--yellow-soft);
+
+    clip-path:polygon(
+        30% 0%,
+        70% 0%,
+        100% 30%,
+        100% 70%,
+        70% 100%,
+        30% 100%,
+        0% 70%,
+        0% 30%
+    );
+
+    transition:background-color .3s ease;
+}
+
+/* Hueco central de la casilla navegable */
+
+.tile-nav::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:24px;
+    height:24px;
+
+    background:#ECECEC;
+
+    border-radius:50%;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%, -50%);
+
+    z-index:2;
+}
+
+/* Casilla roja navegable con forma de estrella */
+
+.tile-nav.red::before{
+
+    clip-path:polygon(
+        50% 0%,
+        62% 22%,
+        85% 15%,
+        78% 38%,
+        100% 50%,
+        78% 62%,
+        85% 85%,
+        62% 78%,
+        50% 100%,
+        38% 78%,
+        15% 85%,
+        22% 62%,
+        0% 50%,
+        22% 38%,
+        15% 15%,
+        38% 22%
+    );
+}
+
+.tile-nav.red::after{
+
+    width:18px;
+    height:18px;
 }
 
 /* Hover colores */
-.tile-nav.blue:hover{
+
+.tile-nav.blue:hover::before{
     background:var(--blue);
 }
 
-.tile-nav.green:hover{
+.tile-nav.green:hover::before{
     background:var(--green);
 }
 
-.tile-nav.red:hover{
+.tile-nav.red:hover::before{
     background:var(--red);
 }
 
-.tile-nav.yellow:hover{
+.tile-nav.yellow:hover::before{
     background:var(--yellow);
 }
 
 .tile-nav:hover{
+
     transform:scale(1.12);
+}
+
+/* Corrige que la casilla roja navegable no recorte el texto */
+.tile.tile-nav.red{
+    clip-path:none;
+    background:transparent;
+    overflow:visible;
 }
 
 /* ================================= */
@@ -210,19 +447,24 @@ body{
 
 .tile-label{
     position:absolute;
-    top:95px;
+    top:92px;
     left:50%;
-    transform:translateX(-50%);
+    transform:translateX(-50%) translateY(8px);
     opacity:0;
     white-space:nowrap;
     font-size:1rem;
     font-weight:600;
     letter-spacing:.4px;
-    transition:.3s;
+    pointer-events:none;
+    z-index:5;
+    transition:
+        opacity .3s ease,
+        transform .3s ease;
 }
 
 .tile-nav:hover .tile-label{
     opacity:1;
+    transform:translateX(-50%) translateY(0);
 }
 
 /* Colores etiquetas */
@@ -246,24 +488,64 @@ body{
 /* CASILLAS MENÚ HERO */
 /* ================================= */
 
-.nav-galeria{
-    left:39%;
-    top:62%;
+.hero-section-nav{
+    position:absolute;
+    left:50%;
+    top:68%;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    z-index:120;
 }
 
-.nav-acerca{
-    left:46%;
-    top:62%;
+.hero-section-nav .tile-nav{
+    position:relative;
+    left:auto;
+    top:auto;
+    flex:0 0 75px;
 }
 
-.nav-pix{
-    left:53%;
-    top:62%;
+/* ================================= */
+/* CAMINOS ENTRE CASILLAS DEL MENÚ */
+/* ================================= */
+
+.path-dots{
+
+    position:relative;
+
+    width:46px;
+    height:8px;
+
+    display:inline-block;
+
+    flex:0 0 46px;
 }
 
-.nav-interpretacion{
-    left:60%;
-    top:62%;
+/* Tres puntos negros */
+
+.path-dots::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:50%;
+    left:0;
+
+    width:6px;
+    height:6px;
+
+    background:#222;
+
+    border-radius:50%;
+
+    transform:translateY(-50%);
+
+    box-shadow:
+        20px 0 0 #222,
+        40px 0 0 #222;
 }
 
 /* ================================= */
@@ -307,8 +589,10 @@ body{
 /* ================================= */
 
 .intro{
+    position:relative;
+    z-index:10;
     max-width:950px;
-    margin:120px auto;
+    margin:260px auto 120px auto;
     padding:0 40px;
 }
 
