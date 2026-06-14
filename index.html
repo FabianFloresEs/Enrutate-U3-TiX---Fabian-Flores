@@ -8,54 +8,79 @@
 </head>
 <body>
 
-<header class="hero" id="hero">
+    <!-- ========================= -->
+    <!-- BARRA SUPERIOR -->
+    <!-- ========================= -->
 
-    <!-- Fondo dinámico del Hero -->
-    <div class="hero-board" aria-hidden="true">
+    <nav class="top-nav" id="topNav" aria-label="Navegación principal">
 
-        <div class="hero-pattern" id="heroPattern"></div>
-
-    </div>
-
-    <!-- Casillas navegables -->
-    <div class="hero-section-nav">
-
-        <a href="#galeria" class="tile tile-nav blue nav-galeria">
-            <span class="tile-label">Galería</span>
+        <a href="#hero" class="top-nav-logo">
+            Enrútate
         </a>
 
-        <span class="path-dots"></span>
+        <div class="top-nav-links">
 
-        <a href="#acerca" class="tile tile-nav green nav-acerca">
-            <span class="tile-label">Acerca del Juego</span>
-        </a>
+            <a href="#galeria">Galería</a>
+            <a href="#acerca">Acerca del Juego</a>
+            <a href="#pix">PiX</a>
+            <a href="#interpretacion">Interpretación Digital</a>
 
-        <span class="path-dots"></span>
+        </div>
 
-        <a href="#pix" class="tile tile-nav red nav-pix">
-            <span class="tile-label">PiX</span>
-        </a>
+    </nav>
 
-        <span class="path-dots"></span>
+    <!-- ========================= -->
+    <!-- HERO -->
+    <!-- ========================= -->
 
-        <a href="#interpretacion" class="tile tile-nav yellow nav-interpretacion">
-            <span class="tile-label">Interpretación Digital</span>
-        </a>
+    <header class="hero" id="hero">
 
-    </div>
+        <!-- Fondo dinámico del Hero -->
+        <div class="hero-board" aria-hidden="true">
 
-    <!-- Contenido central -->
-    <div class="hero-content">
+            <div class="hero-pattern" id="heroPattern"></div>
 
-        <button type="button" class="hero-logo-button" id="heroLogoButton" aria-label="Regenerar patrón del Hero">
-            <img src="assets/logo-enrutate.svg" alt="Enrútate" class="hero-logo-img">
-        </button>
+        </div>
 
-        <h2>Un juego de azar, avanzar<br>y conseguir puntos</h2>
+        <!-- Casillas navegables -->
+        <div class="hero-section-nav">
 
-    </div>
+            <a href="#galeria" class="tile tile-nav blue nav-galeria">
+                <span class="tile-label">Galería</span>
+            </a>
 
-</header>
+            <span class="path-dots"></span>
+
+            <a href="#acerca" class="tile tile-nav green nav-acerca">
+                <span class="tile-label">Acerca del Juego</span>
+            </a>
+
+            <span class="path-dots"></span>
+
+            <a href="#pix" class="tile tile-nav red nav-pix">
+                <span class="tile-label">PiX</span>
+            </a>
+
+            <span class="path-dots"></span>
+
+            <a href="#interpretacion" class="tile tile-nav yellow nav-interpretacion">
+                <span class="tile-label">Interpretación Digital</span>
+            </a>
+
+        </div>
+
+        <!-- Contenido central -->
+        <div class="hero-content">
+
+            <button type="button" class="hero-logo-button" id="heroLogoButton" aria-label="Regenerar patrón del Hero">
+                <img src="assets/logo-enrutate.svg" alt="Enrútate" class="hero-logo-img">
+            </button>
+
+            <h2>Un juego de azar, avanzar<br>y conseguir puntos</h2>
+
+        </div>
+
+    </header>
 
     <!-- ========================= -->
     <!-- INTRODUCCIÓN -->
@@ -94,23 +119,55 @@
             <h2>Galería</h2>
         </div>
 
-        <div class="gallery">
+        <div class="gallery-carousel" id="galleryCarousel">
 
-            <figure class="gallery-item">
+        <button class="gallery-btn gallery-btn--prev" type="button" aria-label="Imagen anterior">
+            &#10094;
+        </button>
+
+        <div class="gallery-stage">
+
+            <figure class="gallery-slide" data-index="0">
                 <img src="assets/galeria.01.CajaEnrútate.png" alt="Caja de Enrútate">
             </figure>
 
-            <figure class="gallery-item">
-                <img src="assets/galeria.02.ContenidoJuego.png" alt="Contenido del juego">
+            <figure class="gallery-slide" data-index="1">
+                <img src="assets/galeria.02.ContenidoJuego.png" alt="Contenido del juego Enrútate">
             </figure>
 
-            <figure class="gallery-item">
+            <figure class="gallery-slide" data-index="2">
                 <img src="assets/galeria.03.Tablero.png" alt="Tablero de Enrútate">
+            </figure>
+
+            <figure class="gallery-slide" data-index="3">
+                <img src="assets/galeria.04.TableroVistaSuperior.png" alt="Vista superior del tablero Enrútate">
+            </figure>
+
+            <figure class="gallery-slide" data-index="4">
+                <img src="assets/galeria.05.CajaReverso.png" alt="Reverso de la caja de Enrútate">
             </figure>
 
         </div>
 
-    </section>
+        <button class="gallery-btn gallery-btn--next" type="button" aria-label="Imagen siguiente">
+            &#10095;
+        </button>
+
+        <div class="gallery-dots" aria-label="Indicadores de galería"></div>
+
+    </div>
+
+</section>
+
+<div class="gallery-lightbox" id="galleryLightbox" aria-hidden="true">
+
+    <button class="gallery-lightbox-close" type="button" aria-label="Cerrar imagen ampliada">
+        &times;
+    </button>
+
+    <img src="" alt="" class="gallery-lightbox-img">
+
+</div>
 
     <!-- ========================= -->
     <!-- ACERCA DEL JUEGO -->

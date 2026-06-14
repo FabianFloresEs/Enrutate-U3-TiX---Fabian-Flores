@@ -54,6 +54,234 @@ if(nextBtn && prevBtn){
 showSlide(0);
 
 /* ================================= */
+/* GALERÍA CARRUSEL */
+/* ================================= */
+
+const gallerySlides = document.querySelectorAll('.gallery-slide');
+const galleryPrevBtn = document.querySelector('.gallery-btn--prev');
+const galleryNextBtn = document.querySelector('.gallery-btn--next');
+const galleryDotsContainer = document.querySelector('.gallery-dots');
+
+const galleryLightbox = document.getElementById('galleryLightbox');
+const galleryLightboxImg = document.querySelector('.gallery-lightbox-img');
+const galleryLightboxClose = document.querySelector('.gallery-lightbox-close');
+
+let currentGallerySlide = 0;
+let galleryAutoplay = null;
+
+function getCircularIndex(index, total){
+    return (index + total) % total;
+}
+
+function showGallerySlide(index){
+
+    if(!gallerySlides.length) return;
+
+    const total = gallerySlides.length;
+
+    currentGallerySlide = getCircularIndex(index, total);
+
+    gallerySlides.forEach((slide, slideIndex) => {
+
+        slide.classList.remove(
+            'is-active',
+            'is-prev',
+            'is-next',
+            'is-far-prev',
+            'is-far-next'
+        );
+
+        if(slideIndex === currentGallerySlide){
+            slide.classList.add('is-active');
+        }
+
+        if(slideIndex === getCircularIndex(currentGallerySlide - 1, total)){
+            slide.classList.add('is-prev');
+        }
+
+        if(slideIndex === getCircularIndex(currentGallerySlide + 1, total)){
+            slide.classList.add('is-next');
+        }
+
+        if(slideIndex === getCircularIndex(currentGallerySlide - 2, total)){
+            slide.classList.add('is-far-prev');
+        }
+
+        if(slideIndex === getCircularIndex(currentGallerySlide + 2, total)){
+            slide.classList.add('is-far-next');
+        }
+
+    });
+
+    updateGalleryDots();
+}
+
+function createGalleryDots(){
+
+    if(!galleryDotsContainer || !gallerySlides.length) return;
+
+    galleryDotsContainer.innerHTML = '';
+
+    gallerySlides.forEach((_, index) => {
+
+        const dot = document.createElement('button');
+
+        dot.classList.add('gallery-dot');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', `Ver imagen ${index + 1}`);
+
+        dot.addEventListener('click', () => {
+            showGallerySlide(index);
+            restartGalleryAutoplay();
+        });
+
+        galleryDotsContainer.appendChild(dot);
+
+    });
+
+}
+
+function updateGalleryDots(){
+
+    if(!galleryDotsContainer) return;
+
+    const dots = galleryDotsContainer.querySelectorAll('.gallery-dot');
+
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('is-active', index === currentGallerySlide);
+    });
+
+}
+
+function startGalleryAutoplay(){
+
+    stopGalleryAutoplay();
+
+    galleryAutoplay = setInterval(() => {
+        showGallerySlide(currentGallerySlide + 1);
+    }, 3800);
+
+}
+
+function stopGalleryAutoplay(){
+
+    if(galleryAutoplay){
+        clearInterval(galleryAutoplay);
+        galleryAutoplay = null;
+    }
+
+}
+
+function restartGalleryAutoplay(){
+
+    stopGalleryAutoplay();
+    startGalleryAutoplay();
+
+}
+
+function openGalleryLightbox(slide){
+
+    if(!galleryLightbox || !galleryLightboxImg) return;
+
+    const image = slide.querySelector('img');
+
+    if(!image) return;
+
+    stopGalleryAutoplay();
+
+    galleryLightboxImg.src = image.src;
+    galleryLightboxImg.alt = image.alt;
+
+    galleryLightbox.classList.add('is-open');
+    galleryLightbox.setAttribute('aria-hidden', 'false');
+
+}
+
+function closeGalleryLightbox(){
+
+    if(!galleryLightbox || !galleryLightboxImg) return;
+
+    galleryLightbox.classList.remove('is-open');
+    galleryLightbox.setAttribute('aria-hidden', 'true');
+
+    galleryLightboxImg.src = '';
+    galleryLightboxImg.alt = '';
+
+    startGalleryAutoplay();
+
+}
+
+if(gallerySlides.length){
+
+    createGalleryDots();
+    showGallerySlide(0);
+    startGalleryAutoplay();
+
+    gallerySlides.forEach((slide, index) => {
+
+        slide.addEventListener('click', () => {
+
+            const wasActive = index === currentGallerySlide;
+
+            if(wasActive){
+                openGalleryLightbox(slide);
+                return;
+            }
+
+            showGallerySlide(index);
+            restartGalleryAutoplay();
+
+        });
+
+    });
+
+}
+
+if(galleryPrevBtn){
+
+    galleryPrevBtn.addEventListener('click', () => {
+        showGallerySlide(currentGallerySlide - 1);
+        restartGalleryAutoplay();
+    });
+
+}
+
+if(galleryNextBtn){
+
+    galleryNextBtn.addEventListener('click', () => {
+        showGallerySlide(currentGallerySlide + 1);
+        restartGalleryAutoplay();
+    });
+
+}
+
+if(galleryLightbox){
+
+    galleryLightbox.addEventListener('click', (event) => {
+
+        if(event.target === galleryLightbox){
+            closeGalleryLightbox();
+        }
+
+    });
+
+}
+
+if(galleryLightboxClose){
+
+    galleryLightboxClose.addEventListener('click', closeGalleryLightbox);
+
+}
+
+document.addEventListener('keydown', (event) => {
+
+    if(event.key === 'Escape' && galleryLightbox && galleryLightbox.classList.contains('is-open')){
+        closeGalleryLightbox();
+    }
+
+});
+
+/* ================================= */
 /* APARICIÓN DE SECCIONES */
 /* ================================= */
 
@@ -97,6 +325,8 @@ const hero = document.querySelector('.hero');
 const heroPattern = document.getElementById('heroPattern');
 const heroLogoButton = document.getElementById('heroLogoButton');
 
+const topNav = document.getElementById('topNav'); /* para quu aparezca la barra superior después del Hero */
+
 const patternColors = {
     yellow:'#FFDD0E',
     blue:'#008FB8',
@@ -105,6 +335,9 @@ const patternColors = {
     dots:'#222222',
     bg:'#ECECEC'
 };
+
+const HERO_VISUAL_SCALE = 0.75;
+const HERO_PATTERN_SCALE = 1 / HERO_VISUAL_SCALE;
 
 let revealPoints = [];
 let revealAnimationFrame = null;
@@ -196,32 +429,32 @@ function drawLargeYellowGoal(cx, cy, size){
 function drawNode(node){
     switch(node.type){
         case 'blue':
-            return drawSmallOctagon(node.x, node.y, 26, patternColors.blue);
+            return drawSmallOctagon(node.x, node.y, 21, patternColors.blue);
 
         case 'green':
-            return drawSmallOctagon(node.x, node.y, 26, patternColors.green);
+            return drawSmallOctagon(node.x, node.y, 21, patternColors.green);
 
         case 'yellow':
-            return drawSmallOctagon(node.x, node.y, 26, patternColors.yellow);
+            return drawSmallOctagon(node.x, node.y, 21, patternColors.yellow);
 
         case 'red':
-            return drawRedStar(node.x, node.y, 24);
+            return drawRedStar(node.x, node.y, 20);
 
         case 'green-large':
-            return drawLargeGreenBonus(node.x, node.y, 35);
+            return drawLargeGreenBonus(node.x, node.y, 30);
 
         case 'yellow-large':
-            return drawLargeYellowGoal(node.x, node.y, 35);
+            return drawLargeYellowGoal(node.x, node.y, 30);
 
         default:
-            return drawSmallOctagon(node.x, node.y, 26, patternColors.blue);
+            return drawSmallOctagon(node.x, node.y, 21, patternColors.blue);
     }
 }
 
 function getNodeRadius(type){
-    if(type === 'red') return 24;
-    if(type === 'green-large' || type === 'yellow-large') return 35;
-    return 26;
+    if(type === 'red') return 20;
+    if(type === 'green-large' || type === 'yellow-large') return 30;
+    return 21;
 }
 
 /* ================================= */
@@ -242,7 +475,7 @@ function drawDottedLine(nodeA, nodeB){
     const dy = y2 - y1;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if(dist < 80) return '';
+    if(dist < 65) return '';
 
     const ux = dx / dist;
     const uy = dy / dist;
@@ -251,8 +484,8 @@ function drawDottedLine(nodeA, nodeB){
         Menor margen desde la casilla:
         permite que los 3 puntos respiren mejor.
     */
-    const startInset = r1 + 10;
-    const endInset = r2 + 10;
+    const startInset = r1 + 8;
+    const endInset = r2 + 8;
 
     const sx = x1 + ux * startInset;
     const sy = y1 + uy * startInset;
@@ -297,7 +530,7 @@ function randomNodeType(){
 
 function getNodeCollisionRadius(node){
 
-    return getNodeRadius(node.type) + 28;
+    return getNodeRadius(node.type) + 18;
 
 }
 
@@ -361,7 +594,7 @@ function segmentTouchesZone(a, b, zones){
 
 }
 
-function getExclusionZones(width, height){
+function getExclusionZones(width, height, scale = 1){
 
     const zones = [];
 
@@ -373,17 +606,17 @@ function getExclusionZones(width, height){
     Zona protegida del logo + subtítulo.
     Se calcula desde el elemento real, no desde medidas inventadas.
     */
+
     if(content){
 
         const rect = content.getBoundingClientRect();
 
         zones.push({
-            x:rect.left - heroRect.left - 250,
-            y:rect.top - heroRect.top - 115,
-            w:rect.width + 500,
-            h:rect.height + 230
+            x:(rect.left - heroRect.left - 150) * scale,
+            y:(rect.top - heroRect.top - 85) * scale,
+            w:(rect.width + 300) * scale,
+            h:(rect.height + 170) * scale
         });
-
     }
 
     /*
@@ -395,10 +628,10 @@ function getExclusionZones(width, height){
         const rect = nav.getBoundingClientRect();
 
         zones.push({
-            x:rect.left - heroRect.left - 220,
-            y:rect.top - heroRect.top - 150,
-            w:rect.width + 440,
-            h:rect.height + 300
+            x:(rect.left - heroRect.left - 170) * scale,
+            y:(rect.top - heroRect.top - 110) * scale,
+            w:(rect.width + 340) * scale,
+            h:(rect.height + 220) * scale
         });
 
     }
@@ -619,8 +852,8 @@ function createRoute(graph, exclusionZones, width, height){
     const tempNodes = [];
     const tempLinks = [];
 
-    const routeStep = 170;
-    const routeLength = Math.floor(rand(5, 9));
+    const routeStep = 132;
+    const routeLength = Math.floor(rand(6, 11));
 
     let current = createRandomStart(graph.nodes, exclusionZones, width, height);
 
@@ -777,10 +1010,10 @@ function generateHeroPattern(){
 
     if(!hero || !heroPattern) return;
 
-    const width = hero.offsetWidth;
-    const height = hero.offsetHeight + 220; // extra para que los caminos puedan salir del área visible
+    const width = hero.offsetWidth * HERO_PATTERN_SCALE;
+    const height = hero.offsetHeight * HERO_PATTERN_SCALE;
 
-    const exclusionZones = getExclusionZones(width, height);
+    const exclusionZones = getExclusionZones(width, height, HERO_PATTERN_SCALE);
 
     const graph = {
         nodes:[],
@@ -788,8 +1021,8 @@ function generateHeroPattern(){
     };
 
     const targetNodes = Math.min(
-        165,
-        Math.max(95, Math.floor((width * height) / 12000))
+        260,
+        Math.max(150, Math.floor((width * height) / 6500))
     );
 
     let attempts = 0;
@@ -821,7 +1054,9 @@ function generateHeroPattern(){
         .replace(/'/g, '%27')
         .replace(/"/g, '%22');
 
-    heroPattern.style.backgroundImage = `url("data:image/svg+xml;charset=utf-8,${encodedSvg}")`;
+    const patternUrl = `url("data:image/svg+xml;charset=utf-8,${encodedSvg}")`;
+
+    heroPattern.style.backgroundImage = patternUrl;
 }
 
 /* ================================= */
@@ -908,6 +1143,7 @@ function flashPattern(){
 
     setTimeout(() => {
         hero.classList.remove('is-flashing');
+
     }, 1000);
 
 }
@@ -946,9 +1182,23 @@ function regeneratePatternWithTransition(){
 /* EVENTOS */
 /* ================================= */
 
-if(hero){
-    hero.addEventListener('mousemove', updateRevealPosition);
-}
+document.addEventListener('mousemove', (event) => {
+
+    if(hero){
+
+        const heroRect = hero.getBoundingClientRect();
+
+        const mouseInsideHero =
+            event.clientX >= heroRect.left &&
+            event.clientX <= heroRect.right &&
+            event.clientY >= heroRect.top &&
+            event.clientY <= heroRect.bottom;
+
+        if(mouseInsideHero){
+            updateRevealPosition(event);
+        }
+    }
+});
 
 if(heroLogoButton){
     heroLogoButton.addEventListener('click', () => {
@@ -964,3 +1214,32 @@ window.addEventListener('load', () => {
 window.addEventListener('resize', () => {
     generateHeroPattern();
 });
+
+/* ================================= */
+/* BARRA SUPERIOR AL SALIR DEL HERO */
+/* ================================= */
+
+if(hero && topNav){
+
+    const topNavObserver = new IntersectionObserver(
+        entries => {
+
+            entries.forEach(entry => {
+
+                if(entry.isIntersecting){
+                    topNav.classList.remove('is-visible');
+                }else{
+                    topNav.classList.add('is-visible');
+                }
+
+            });
+
+        },
+        {
+            threshold:0.15
+        }
+    );
+
+    topNavObserver.observe(hero);
+
+}
