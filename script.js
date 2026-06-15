@@ -1188,3 +1188,1003 @@ if(hero && topNav){
     topNavObserver.observe(hero);
 
 }
+
+/*  =================================
+    =================================
+
+         EXPERIMENTACIÓN DIGITAL
+
+    =================================
+    ================================= */
+
+/* ================================= */
+/* EXPERIMENTACIÓN DIGITAL */
+/* ================================= */
+
+(function(){
+
+    const experimentPage = document.body.classList.contains('experimentacion-page');
+
+    if(!experimentPage) return;
+
+    const root = document.getElementById('expRoot');
+    const enterButton = document.querySelector('[data-exp-enter]');
+    const backEntryButton = document.querySelector('[data-exp-back-entry]');
+    const resetButton = document.querySelector('[data-exp-reset]');
+
+    const characterButtons = document.querySelectorAll('[data-exp-character]');
+    const effectCards = document.querySelectorAll('[data-exp-effect]');
+
+    const boardWrap = document.querySelector('.exp-board-wrap');
+
+    const layerRingsGroup = document.getElementById('expLayerRings');
+    const baseEdgesGroup = document.getElementById('expBaseEdges');
+    const trailLayer = document.getElementById('expTrailLayer');
+    const cellsLayer = document.getElementById('expCellsLayer');
+    const fogLayer = document.getElementById('expFogLayer');
+    const playerLayer = document.getElementById('expPlayerLayer');
+
+    const stepDots = document.querySelectorAll('.exp-step-indicator span');
+    const progressFill = document.getElementById('expProgressFill');
+
+    if(!root || !cellsLayer || !playerLayer) return;
+
+    const NS = 'http://www.w3.org/2000/svg';
+
+    const characterColors = {
+        violet:'#7C4DFF',
+        pink:'#FF4FA3',
+        orange:'#FF8A00',
+        cyan:'#2EC8D3'
+    };
+
+    const trailPalettes = {
+        violet:['#4C2BBF', '#7C4DFF', '#B49CFF', '#5F43D6'],
+        pink:['#B51663', '#FF4FA3', '#FFC1DD', '#E4418D'],
+        orange:['#C75C00', '#FF8A00', '#FFD166', '#F4A261'],
+        cyan:['#078D9B', '#2EC8D3', '#A7F3F6', '#16A8B8']
+    };
+
+    let selectedCharacter = null;
+    let selectedPlayerColor = '#7C4DFF';
+    let selectedTrailColor = '#4C2BBF';
+
+    let nodes = [];
+    let edges = [];
+    let fogElements = [];
+
+    let currentNodeId = null;
+    let startNodeId = null;
+    let checkpointNodeId = null;
+
+    let unlockedRing = 1;
+    let stepCount = 0;
+    let isComplete = false;
+
+    let routeIndex = 0;
+    let currentRouteLines = [];
+
+    const totalProgressLength = 326.72;
+
+    function createSvgElement(tag, attributes = {}){
+
+        const element = document.createElementNS(NS, tag);
+
+        Object.entries(attributes).forEach(([key, value]) => {
+            element.setAttribute(key, value);
+        });
+
+        return element;
+
+    }
+
+    function getNode(id){
+        return nodes.find(node => node.id === id);
+    }
+
+    function makeNodeId(ring, index){
+        return `r${ring}-n${index}`;
+    }
+
+    function getRouteColor(){
+
+        if(!selectedCharacter){
+            return '#4C2BBF';
+        }
+
+        const palette = trailPalettes[selectedCharacter];
+
+        return palette[routeIndex % palette.length];
+
+    }
+
+    function revealEffectInfo(color){
+
+        effectCards.forEach(card => {
+
+            const cardColor = card.getAttribute('data-exp-effect');
+
+            if(cardColor === color){
+                card.classList.add('is-unlocked');
+            }
+
+        });
+
+    }
+
+    function resetEffectInfo(){
+
+        effectCards.forEach(card => {
+            card.classList.remove('is-unlocked');
+        });
+
+    }
+
+    function finishCurrentRoute(){
+
+        currentRouteLines.forEach(line => {
+            line.classList.remove('is-active');
+            line.classList.add('is-past');
+        });
+
+        currentRouteLines = [];
+
+        routeIndex++;
+        selectedTrailColor = getRouteColor();
+
+    }
+
+    function buildNodes(){
+
+        const ringData = [
+            { ring:0, count:1, radius:0, size:48 },
+            { ring:1, count:8, radius:150, size:40 },
+            { ring:2, count:12, radius:265, size:36 },
+            { ring:3, count:16, radius:375, size:32 },
+            { ring:4, count:22, radius:470, size:28 }
+        ];
+
+        const colorPattern = [
+            'blue', 'green', 'red',
+            'green', 'blue', 'red',
+            'blue', 'green', 'red'
+        ];
+
+        nodes = [];
+
+        ringData.forEach(ringInfo => {
+
+            for(let i = 0; i < ringInfo.count; i++){
+
+                let x = 500;
+                let y = 500;
+
+                if(ringInfo.ring > 0){
+
+                    const angle = (-90 + (360 / ringInfo.count) * i + ringInfo.ring * 7) * Math.PI / 180;
+
+                    x = 500 + Math.cos(angle) * ringInfo.radius;
+                    y = 500 + Math.sin(angle) * ringInfo.radius;
+
+                }
+
+                const color = ringInfo.ring === 0
+                    ? 'yellow'
+                    : colorPattern[(i + ringInfo.ring) % colorPattern.length];
+
+                nodes.push({
+                    id:makeNodeId(ringInfo.ring, i),
+                    ring:ringInfo.ring,
+                    index:i,
+                    count:ringInfo.count,
+                    radius:ringInfo.radius,
+                    x,
+                    y,
+                    size:ringInfo.size,
+                    color,
+                    visible:ringInfo.ring <= 1,
+                    revealed:ringInfo.ring === 0,
+                    stable:false,
+                    element:null
+                });
+
+            }
+
+        });
+
+    }
+
+    function addEdge(a, b){
+
+        const edgeId = [a, b].sort().join('__');
+
+        if(edges.some(edge => edge.id === edgeId)) return;
+
+        edges.push({
+            id:edgeId,
+            a,
+            b
+        });
+
+    }
+
+    function getConnectedNodeIds(id){
+
+        return edges
+            .filter(edge => edge.a === id || edge.b === id)
+            .map(edge => edge.a === id ? edge.b : edge.a);
+
+    }
+
+    function buildEdges(){
+
+        edges = [];
+
+        const maxRing = 4;
+
+        for(let ring = 1; ring <= maxRing; ring++){
+
+            const ringNodes = nodes.filter(node => node.ring === ring);
+
+            ringNodes.forEach((node, index) => {
+
+                const nextNode = ringNodes[(index + 1) % ringNodes.length];
+                const prevNode = ringNodes[(index - 1 + ringNodes.length) % ringNodes.length];
+
+                addEdge(node.id, nextNode.id);
+
+                if(index % 3 === 0){
+                    addEdge(node.id, prevNode.id);
+                }
+
+            });
+
+        }
+
+        const center = getNode(makeNodeId(0, 0));
+        const firstRingNodes = nodes.filter(node => node.ring === 1);
+
+        firstRingNodes.forEach(node => {
+            addEdge(center.id, node.id);
+        });
+
+        nodes.forEach(node => {
+
+            if(node.ring <= 0 || node.ring >= maxRing) return;
+
+            const nextRingNodes = nodes.filter(otherNode => otherNode.ring === node.ring + 1);
+
+            const sortedByDistance = nextRingNodes
+                .map(otherNode => {
+                    return {
+                        node:otherNode,
+                        distance:Math.hypot(otherNode.x - node.x, otherNode.y - node.y)
+                    };
+                })
+                .sort((a, b) => a.distance - b.distance);
+
+            addEdge(node.id, sortedByDistance[0].node.id);
+            addEdge(node.id, sortedByDistance[1].node.id);
+
+        });
+
+    }
+
+    function renderLayerRings(){
+
+        if(!layerRingsGroup) return;
+
+        layerRingsGroup.innerHTML = '';
+
+        [150, 265, 375, 470].forEach(radius => {
+
+            const ring = createSvgElement('circle', {
+                class:'exp-layer-ring',
+                cx:500,
+                cy:500,
+                r:radius
+            });
+
+            layerRingsGroup.appendChild(ring);
+
+        });
+
+    }
+
+    function renderBaseEdges(){
+
+        if(!baseEdgesGroup) return;
+
+        baseEdgesGroup.innerHTML = '';
+
+        edges.forEach(edge => {
+
+            const a = getNode(edge.a);
+            const b = getNode(edge.b);
+
+            if(!a || !b) return;
+
+            const line = createSvgElement('line', {
+                class:'exp-base-edge',
+                x1:a.x,
+                y1:a.y,
+                x2:b.x,
+                y2:b.y
+            });
+
+            baseEdgesGroup.appendChild(line);
+
+        });
+
+    }
+
+    function renderFog(){
+
+        if(!fogLayer) return;
+
+        fogLayer.innerHTML = '';
+        fogElements = [];
+
+        [
+            { ring:2, r:310 },
+            { ring:3, r:420 },
+            { ring:4, r:520 }
+        ].forEach(item => {
+
+            const fog = createSvgElement('circle', {
+                class:'exp-fog',
+                cx:500,
+                cy:500,
+                r:item.r,
+                'data-fog-ring':item.ring
+            });
+
+            fogElements.push(fog);
+            fogLayer.appendChild(fog);
+
+        });
+
+    }
+
+    function updateFog(){
+
+        fogElements.forEach(fog => {
+
+            const ring = Number(fog.getAttribute('data-fog-ring'));
+
+            fog.classList.toggle('is-hidden', ring <= unlockedRing);
+
+        });
+
+    }
+
+    function renderCells(){
+
+        cellsLayer.innerHTML = '';
+
+        nodes.forEach(node => {
+
+            const cell = createSvgElement('rect', {
+                class:'exp-cell',
+                x:node.x - node.size / 2,
+                y:node.y - node.size / 2,
+                width:node.size,
+                height:node.size,
+                rx:node.size * .28,
+                ry:node.size * .28,
+                'data-node-id':node.id,
+                'data-color':node.color
+            });
+
+            cell.addEventListener('click', () => {
+                moveToNode(node.id);
+            });
+
+            node.element = cell;
+
+            cellsLayer.appendChild(cell);
+
+        });
+
+    }
+
+    function updateCellPosition(node){
+
+        if(!node || !node.element) return;
+
+        node.element.setAttribute('x', node.x - node.size / 2);
+        node.element.setAttribute('y', node.y - node.size / 2);
+
+    }
+
+    function renderPlayer(){
+
+        playerLayer.innerHTML = '';
+
+        const startNode = getNode(startNodeId);
+
+        if(!startNode) return;
+
+        const player = createSvgElement('circle', {
+            class:'exp-player',
+            id:'expPlayer',
+            cx:startNode.x,
+            cy:startNode.y,
+            r:18
+        });
+
+        player.style.fill = selectedPlayerColor;
+
+        playerLayer.appendChild(player);
+
+    }
+
+    function updatePlayerColor(){
+
+        const player = document.getElementById('expPlayer');
+
+        if(player){
+            player.style.fill = selectedPlayerColor;
+        }
+
+    }
+
+    function updatePlayerPosition(){
+
+        const player = document.getElementById('expPlayer');
+        const node = getNode(currentNodeId);
+
+        if(!player || !node) return;
+
+        player.setAttribute('cx', node.x);
+        player.setAttribute('cy', node.y);
+
+    }
+
+    function getAvailableNodeIds(){
+
+        if(!currentNodeId) return [];
+
+        return getConnectedNodeIds(currentNodeId)
+            .map(id => getNode(id))
+            .filter(Boolean)
+            .filter(node => node.visible || node.revealed || node.stable)
+            .filter(node => node.ring <= unlockedRing || node.revealed || node.stable)
+            .map(node => node.id);
+
+    }
+
+    function updateCells(){
+
+        const availableIds = getAvailableNodeIds();
+
+        nodes.forEach(node => {
+
+            if(node.ring <= unlockedRing || node.revealed || node.stable){
+                node.visible = true;
+            }
+
+            if(!node.element) return;
+
+            node.element.classList.toggle('is-visible', node.visible);
+            node.element.classList.toggle('is-revealed', node.revealed);
+            node.element.classList.toggle('is-current', node.id === currentNodeId);
+            node.element.classList.toggle('is-available', availableIds.includes(node.id) && !isComplete);
+            node.element.classList.toggle('is-stable', node.stable);
+
+        });
+
+        updateFog();
+
+    }
+
+    function updateStepDots(){
+
+        stepDots.forEach((dot, index) => {
+            dot.classList.toggle('is-filled', index < stepCount);
+        });
+
+    }
+
+    function updateProgress(){
+
+        const revealedAmount = nodes.filter(node => node.revealed).length;
+        const progress = revealedAmount / nodes.length;
+
+        const offset = totalProgressLength - totalProgressLength * progress;
+
+        if(progressFill){
+            progressFill.style.strokeDashoffset = offset;
+        }
+
+        if(progress >= 1 && !isComplete){
+
+            isComplete = true;
+
+            nodes.forEach(node => {
+                node.visible = true;
+                node.revealed = true;
+            });
+
+            finishCurrentRoute();
+            updateCells();
+
+            if(boardWrap){
+                boardWrap.classList.add('is-complete');
+            }
+
+        }
+
+    }
+
+    function drawTrail(fromId, toId){
+
+        const from = getNode(fromId);
+        const to = getNode(toId);
+
+        if(!from || !to || !trailLayer) return;
+
+        const line = createSvgElement('line', {
+            class:'exp-trail is-active',
+            x1:from.x,
+            y1:from.y,
+            x2:to.x,
+            y2:to.y,
+            stroke:selectedTrailColor
+        });
+
+        currentRouteLines.push(line);
+        trailLayer.appendChild(line);
+
+    }
+
+    function revealNode(node){
+
+        if(!node) return;
+
+        node.visible = true;
+        node.revealed = true;
+
+    }
+
+    function revealNeighbors(node){
+
+        getConnectedNodeIds(node.id).forEach(id => {
+
+            const neighbor = getNode(id);
+
+            if(!neighbor) return;
+
+            neighbor.visible = true;
+            neighbor.revealed = true;
+
+        });
+
+    }
+
+    function stabilizeZone(node){
+
+        node.stable = true;
+
+        getConnectedNodeIds(node.id).forEach(id => {
+
+            const neighbor = getNode(id);
+
+            if(!neighbor) return;
+
+            neighbor.visible = true;
+            neighbor.stable = true;
+
+        });
+
+    }
+
+    function rotateRing(ring){
+
+        const targetRing = Math.max(1, ring);
+        const ringNodes = nodes.filter(node => node.ring === targetRing);
+
+        if(!ringNodes.length) return;
+
+        const angle = (360 / ringNodes.length) * Math.PI / 180;
+
+        ringNodes.forEach(node => {
+
+            const dx = node.x - 500;
+            const dy = node.y - 500;
+
+            const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
+            const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+
+            node.x = 500 + rotatedX;
+            node.y = 500 + rotatedY;
+
+            updateCellPosition(node);
+
+        });
+
+        renderBaseEdges();
+        updatePlayerPosition();
+
+    }
+
+    function returnFogFrom(node){
+
+        unlockedRing = Math.max(1, node.ring);
+
+        nodes.forEach(item => {
+
+            if(item.ring > unlockedRing && !item.revealed && !item.stable){
+                item.visible = false;
+            }
+
+        });
+
+        updateFog();
+
+    }
+
+    function shiftBoard(){
+
+        if(!boardWrap) return;
+
+        boardWrap.classList.remove('is-shifting');
+
+        void boardWrap.offsetWidth;
+
+        boardWrap.classList.add('is-shifting');
+
+        setTimeout(() => {
+            boardWrap.classList.remove('is-shifting');
+        }, 920);
+
+    }
+
+    function interruptAt(node){
+
+        if(!node || !node.element) return;
+
+        node.element.classList.add('is-interruption');
+
+        setTimeout(() => {
+
+            node.element.classList.remove('is-interruption');
+            finishCurrentRoute();
+            returnToCheckpoint(false);
+
+        }, 650);
+
+    }
+
+    function applyColorEvent(node){
+
+        if(!node) return;
+
+        if(node.color === 'blue'){
+
+            revealEffectInfo('blue');
+
+            rotateRing(node.ring);
+            returnFogFrom(node);
+            shiftBoard();
+
+        }
+
+        if(node.color === 'green'){
+
+            revealEffectInfo('green');
+
+            revealNeighbors(node);
+            stabilizeZone(node);
+
+        }
+
+        if(node.color === 'red'){
+
+            revealEffectInfo('red');
+
+            interruptAt(node);
+
+        }
+
+        if(node.color === 'yellow'){
+
+            revealEffectInfo('yellow');
+
+        }
+
+    }
+
+    function completeStep(node){
+
+        revealNode(node);
+        applyColorEvent(node);
+
+        updateCells();
+        updateProgress();
+
+    }
+
+    function moveToNode(nodeId){
+
+        if(isComplete || !selectedCharacter) return;
+
+        const availableIds = getAvailableNodeIds();
+
+        if(!availableIds.includes(nodeId)) return;
+
+        const previousNodeId = currentNodeId;
+
+        currentNodeId = nodeId;
+
+        drawTrail(previousNodeId, currentNodeId);
+
+        const currentNode = getNode(currentNodeId);
+
+        if(currentNode && currentNode.color !== 'yellow'){
+            stepCount++;
+        }
+
+        if(stepCount >= 3){
+
+            stepCount = 0;
+            completeStep(currentNode);
+
+        }
+
+        updatePlayerPosition();
+        updatePlayerColor();
+        updateStepDots();
+        updateCells();
+
+        const hasOptions = getAvailableNodeIds().length > 0;
+
+        if(!hasOptions && !isComplete){
+
+            setTimeout(() => {
+                finishCurrentRoute();
+                returnToCheckpoint(false);
+            }, 500);
+
+        }
+
+    }
+
+    function returnToCheckpoint(shouldFinishRoute = true){
+
+        if(isComplete) return;
+
+        if(shouldFinishRoute && currentRouteLines.length > 0){
+            finishCurrentRoute();
+        }
+
+        currentNodeId = checkpointNodeId;
+        stepCount = 0;
+
+        updatePlayerPosition();
+        updatePlayerColor();
+        updateStepDots();
+        updateCells();
+
+    }
+
+    function selectCharacter(character){
+
+        selectedCharacter = character;
+        selectedPlayerColor = characterColors[character];
+        routeIndex = 0;
+        selectedTrailColor = getRouteColor();
+
+        root.style.setProperty('--exp-player-color', selectedPlayerColor);
+
+        characterButtons.forEach(button => {
+            button.classList.toggle(
+                'is-selected',
+                button.getAttribute('data-exp-character') === character
+            );
+        });
+
+        if(enterButton){
+            enterButton.disabled = false;
+        }
+
+        renderPlayer();
+        updateCells();
+
+    }
+
+    function startBoard(){
+
+        if(!selectedCharacter) return;
+
+        root.classList.add('is-board-active');
+
+        revealEffectInfo('yellow');
+        returnToCheckpoint(false);
+
+    }
+
+    function goBackToEntry(){
+
+        root.classList.remove('is-board-active');
+
+    }
+
+    function absorbTrailsToCenter(callback){
+
+        if(!trailLayer){
+            callback();
+            return;
+        }
+
+        const trails = Array.from(trailLayer.querySelectorAll('.exp-trail'));
+
+        if(!trails.length){
+            callback();
+            return;
+        }
+
+        if(boardWrap){
+            boardWrap.classList.add('is-resetting');
+        }
+
+        const centerX = 500;
+        const centerY = 500;
+
+        const duration = 900;
+        const startTime = performance.now();
+
+        const trailData = trails.map(line => {
+
+            line.classList.add('is-absorbing');
+            line.classList.remove('is-past');
+
+            return {
+                line,
+                x1:Number(line.getAttribute('x1')),
+                y1:Number(line.getAttribute('y1')),
+                x2:Number(line.getAttribute('x2')),
+                y2:Number(line.getAttribute('y2'))
+            };
+
+        });
+
+        function easeInOut(t){
+            return t < .5
+                ? 4 * t * t * t
+                : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function animate(now){
+
+            const rawProgress = Math.min((now - startTime) / duration, 1);
+            const progress = easeInOut(rawProgress);
+
+            trailData.forEach(item => {
+
+                const x1 = item.x1 + (centerX - item.x1) * progress;
+                const y1 = item.y1 + (centerY - item.y1) * progress;
+                const x2 = item.x2 + (centerX - item.x2) * progress;
+                const y2 = item.y2 + (centerY - item.y2) * progress;
+
+                item.line.setAttribute('x1', x1);
+                item.line.setAttribute('y1', y1);
+                item.line.setAttribute('x2', x2);
+                item.line.setAttribute('y2', y2);
+
+                item.line.style.opacity = String(1 - progress * .9);
+
+            });
+
+            if(rawProgress < 1){
+
+                requestAnimationFrame(animate);
+
+            }else{
+
+                if(boardWrap){
+                    boardWrap.classList.remove('is-resetting');
+                }
+
+                callback();
+
+            }
+
+        }
+
+        requestAnimationFrame(animate);
+
+    }
+
+    function resetExperiment(){
+
+        absorbTrailsToCenter(() => {
+
+            if(boardWrap){
+                boardWrap.classList.remove('is-complete', 'is-shifting');
+            }
+
+            if(trailLayer){
+                trailLayer.innerHTML = '';
+            }
+
+            resetEffectInfo();
+
+            buildNodes();
+            buildEdges();
+
+            startNodeId = makeNodeId(0, 0);
+            checkpointNodeId = startNodeId;
+            currentNodeId = startNodeId;
+
+            unlockedRing = 1;
+            stepCount = 0;
+            isComplete = false;
+
+            routeIndex = 0;
+            selectedTrailColor = getRouteColor();
+            currentRouteLines = [];
+
+            renderLayerRings();
+            renderBaseEdges();
+            renderFog();
+            renderCells();
+            renderPlayer();
+
+            updateCells();
+            updateStepDots();
+            updateProgress();
+
+            revealEffectInfo('yellow');
+
+        });
+    }
+
+    function initBoard(){
+
+        buildNodes();
+        buildEdges();
+
+        startNodeId = makeNodeId(0, 0);
+        checkpointNodeId = startNodeId;
+        currentNodeId = startNodeId;
+
+        renderLayerRings();
+        renderBaseEdges();
+        renderFog();
+        renderCells();
+        renderPlayer();
+
+        updateCells();
+        updateStepDots();
+        updateProgress();
+
+    }
+
+    characterButtons.forEach(button => {
+
+        button.addEventListener('click', () => {
+
+            const character = button.getAttribute('data-exp-character');
+
+            selectCharacter(character);
+
+        });
+
+    });
+
+    if(enterButton){
+        enterButton.addEventListener('click', startBoard);
+    }
+
+    if(backEntryButton){
+        backEntryButton.addEventListener('click', goBackToEntry);
+    }
+
+    if(resetButton){
+        resetButton.addEventListener('click', resetExperiment);
+    }
+
+    initBoard();
+
+})();
