@@ -1197,10 +1197,6 @@ if(hero && topNav){
     =================================
     ================================= */
 
-/* ================================= */
-/* EXPERIMENTACIÓN DIGITAL */
-/* ================================= */
-
 (function(){
 
     const experimentPage = document.body.classList.contains('experimentacion-page');
@@ -1213,9 +1209,9 @@ if(hero && topNav){
     const resetButton = document.querySelector('[data-exp-reset]');
 
     const characterButtons = document.querySelectorAll('[data-exp-character]');
-    const effectCards = document.querySelectorAll('[data-exp-effect]');
 
     const boardWrap = document.querySelector('.exp-board-wrap');
+    const boardSvg = document.getElementById('expBoardSvg');
 
     const layerRingsGroup = document.getElementById('expLayerRings');
     const baseEdgesGroup = document.getElementById('expBaseEdges');
@@ -1224,10 +1220,15 @@ if(hero && topNav){
     const fogLayer = document.getElementById('expFogLayer');
     const playerLayer = document.getElementById('expPlayerLayer');
 
-    const stepDots = document.querySelectorAll('.exp-step-indicator span');
     const progressFill = document.getElementById('expProgressFill');
+    const progressLabel = document.getElementById('expProgressLabel');
 
-    if(!root || !cellsLayer || !playerLayer) return;
+    const atmosphereLayer = document.getElementById('expAtmosphereLayer');
+    const finalOverlay = document.getElementById('expFinalOverlay');
+    const finalLabel = document.getElementById('expFinalLabel');
+    const comboRows = document.querySelectorAll('[data-exp-combo]');
+
+    if(!root || !boardSvg || !cellsLayer || !playerLayer) return;
 
     const NS = 'http://www.w3.org/2000/svg';
 
@@ -1245,26 +1246,112 @@ if(hero && topNav){
         cyan:['#078D9B', '#2EC8D3', '#A7F3F6', '#16A8B8']
     };
 
-    let selectedCharacter = null;
-    let selectedPlayerColor = '#7C4DFF';
-    let selectedTrailColor = '#4C2BBF';
+    const transformFinals = {
+        bbbbb:{
+            className:'fx-ghost',
+            label:'Efecto fantasma'
+        },
+        rrrrr:{
+            className:'fx-blackhole',
+            label:'Agujero negro'
+        },
+        ggggg:{
+            className:'fx-ferro',
+            label:'Topografía ferrofluida'
+        },
+        rrrbg:{
+            className:'fx-impact',
+            label:'Dispersión por impacto'
+        },
+        grbgb:{
+            className:'fx-matrix',
+            label:'Pulso de escaneo'
+        },
+        bgrbr:{
+            className:'fx-glitch',
+            label:'Glitch'
+        }
+    };
+
+const INTERFERENCE_CLASSES = [
+    'fx-ghost',
+    'fx-blackhole',
+    'fx-ferro',
+    'fx-impact',
+    'fx-matrix',
+    'fx-glitch'
+];
+
+    const colorKeys = {
+        red:'r',
+        green:'g',
+        blue:'b'
+    };
+
+    const atmosphereColors = [
+        'rgba(255,221,14,.42)',
+        'rgba(106,170,44,.36)',
+        'rgba(0,143,184,.34)',
+        'rgba(214,36,22,.24)',
+        'rgba(255,138,0,.28)'
+    ];
+
+    const RING_COUNT = 16;
+    const PLAYABLE_RING_LIMIT = 3;
+
+    const FIRST_RADIUS = 190;
+    const RING_GAP = 145;
+
+    const INITIAL_VIEW_SCALE = 0.50;
+
+    const MIN_VIEW_SCALE = 0.28;
+    const MAX_VIEW_SCALE = INITIAL_VIEW_SCALE;
+
+    let viewScale = INITIAL_VIEW_SCALE;
+
+    let boardWidth = 1000;
+    let boardHeight = 1000;
+    let boardCenterX = 500;
+    let boardCenterY = 500;
+
+    let viewOffsetX = 0;
+    let viewOffsetY = 0;
+
+    let isHoldingH = false;
+    let isPanning = false;
+
+    let panStart = {
+        x:0,
+        y:0,
+        offsetX:0,
+        offsetY:0
+    };
+
+    let interferenceTimer = null;
+    let interferenceLoadingTimer = null;
+    let waveFrame = null;
+    let activeInterference = null;
 
     let nodes = [];
     let edges = [];
     let fogElements = [];
 
+    let selectedCharacter = null;
+    let selectedPlayerColor = '#7C4DFF';
+    let selectedTrailColor = '#4C2BBF';
+
     let currentNodeId = null;
     let startNodeId = null;
     let checkpointNodeId = null;
 
-    let unlockedRing = 1;
-    let stepCount = 0;
-    let isComplete = false;
-
     let routeIndex = 0;
     let currentRouteLines = [];
+    let currentRouteNodeIds = [];
+    let discoveredSequences = new Set();
+    let blackholeGuideLines = [];
 
-    const totalProgressLength = 326.72;
+    let transformSequence = [];
+    let isComplete = false;
 
     function createSvgElement(tag, attributes = {}){
 
@@ -1278,12 +1365,16 @@ if(hero && topNav){
 
     }
 
-    function getNode(id){
-        return nodes.find(node => node.id === id);
+    function clamp(value, min, max){
+        return Math.min(Math.max(value, min), max);
     }
 
     function makeNodeId(ring, index){
         return `r${ring}-n${index}`;
+    }
+
+    function getNode(id){
+        return nodes.find(node => node.id === id);
     }
 
     function getRouteColor(){
@@ -1298,112 +1389,168 @@ if(hero && topNav){
 
     }
 
-    function revealEffectInfo(color){
+    function getDepthClass(ring){
 
-        effectCards.forEach(card => {
+        if(ring <= 2) return 'is-depth-near';
+        if(ring <= 5) return 'is-depth-mid';
+        if(ring <= 7) return 'is-depth-far';
 
-            const cardColor = card.getAttribute('data-exp-effect');
-
-            if(cardColor === color){
-                card.classList.add('is-unlocked');
-            }
-
-        });
+        return 'is-depth-fog';
 
     }
 
-    function resetEffectInfo(){
+    function updateSvgViewBox(){
 
-        effectCards.forEach(card => {
-            card.classList.remove('is-unlocked');
-        });
+        const width = boardWidth * viewScale;
+        const height = boardHeight * viewScale;
+
+        const baseX = boardCenterX - width / 2;
+        const baseY = boardCenterY - height / 2;
+
+        let x = baseX + viewOffsetX;
+        let y = baseY + viewOffsetY;
+
+        if(width <= boardWidth){
+            x = clamp(x, 0, boardWidth - width);
+        }else{
+            x = (boardWidth - width) / 2;
+        }
+
+        if(height <= boardHeight){
+            y = clamp(y, 0, boardHeight - height);
+        }else{
+            y = (boardHeight - height) / 2;
+        }
+
+        viewOffsetX = x - baseX;
+        viewOffsetY = y - baseY;
+
+        boardSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
 
     }
 
-    function finishCurrentRoute(){
+    function updateBoardMetrics(){
 
-        currentRouteLines.forEach(line => {
-            line.classList.remove('is-active');
-            line.classList.add('is-past');
-        });
+        const maxRadius = FIRST_RADIUS + (RING_COUNT - 1) * RING_GAP;
 
-        currentRouteLines = [];
+        boardWidth = Math.max(window.innerWidth * 1.35, maxRadius * 2 + 360);
+        boardHeight = Math.max(window.innerHeight * 1.35, maxRadius * 2 + 360);
 
-        routeIndex++;
-        selectedTrailColor = getRouteColor();
+        boardCenterX = boardWidth / 2;
+        boardCenterY = boardHeight / 2;
+
+        updateSvgViewBox();
 
     }
 
     function buildNodes(){
 
-        const ringData = [
-            { ring:0, count:1, radius:0, size:48 },
-            { ring:1, count:8, radius:150, size:40 },
-            { ring:2, count:12, radius:265, size:36 },
-            { ring:3, count:16, radius:375, size:32 },
-            { ring:4, count:22, radius:470, size:28 }
-        ];
+        updateBoardMetrics();
 
         const colorPattern = [
-            'blue', 'green', 'red',
-            'green', 'blue', 'red',
-            'blue', 'green', 'red'
+            'blue','green','red',
+            'green','red','blue',
+            'red','blue','green'
         ];
 
         nodes = [];
 
-        ringData.forEach(ringInfo => {
+        nodes.push({
+            id:makeNodeId(0, 0),
+            ring:0,
+            index:0,
+            count:1,
+            radius:0,
+            x:boardCenterX,
+            y:boardCenterY,
+            size:82,
+            color:'yellow',
+            revealed:true,
+            playable:true,
+            element:null
+        });
 
-            for(let i = 0; i < ringInfo.count; i++){
+        for(let ring = 1; ring <= RING_COUNT; ring++){
 
-                let x = 500;
-                let y = 500;
+            const radius = FIRST_RADIUS + (ring - 1) * RING_GAP;
+            const playable = ring <= PLAYABLE_RING_LIMIT;
 
-                if(ringInfo.ring > 0){
+            let count;
 
-                    const angle = (-90 + (360 / ringInfo.count) * i + ringInfo.ring * 7) * Math.PI / 180;
-
-                    x = 500 + Math.cos(angle) * ringInfo.radius;
-                    y = 500 + Math.sin(angle) * ringInfo.radius;
-
+            if(playable){
+                if(ring === 1){
+                    count = 10;
+                }else if(ring === 2){
+                    count = 14;
+                }else{
+                    count = 18;
                 }
+            }else{
+                count = Math.max(
+                    18 + ring * 4,
+                    Math.round((Math.PI * 2 * radius) / 175)
+                );
+            }
 
-                const color = ringInfo.ring === 0
-                    ? 'yellow'
-                    : colorPattern[(i + ringInfo.ring) % colorPattern.length];
+            let baseSize;
+
+            if(ring === 1){
+                baseSize = 66;
+            }else if(ring === 2){
+                baseSize = 64;
+            }else if(ring === 3){
+                baseSize = 62;
+            }else{
+                baseSize = Math.max(28, 68 - ring * 3);
+            }
+
+            for(let i = 0; i < count; i++){
+
+                const angle = (
+                    -90 +
+                    (360 / count) * i +
+                    ring * 7
+                ) * Math.PI / 180;
+
+                const color = colorPattern[(i + ring) % colorPattern.length];
 
                 nodes.push({
-                    id:makeNodeId(ringInfo.ring, i),
-                    ring:ringInfo.ring,
+                    id:makeNodeId(ring, i),
+                    ring,
                     index:i,
-                    count:ringInfo.count,
-                    radius:ringInfo.radius,
-                    x,
-                    y,
-                    size:ringInfo.size,
+                    count,
+                    radius,
+                    x:boardCenterX + Math.cos(angle) * radius,
+                    y:boardCenterY + Math.sin(angle) * radius,
+                    size:playable ? baseSize : Math.max(22, baseSize * .52),
                     color,
-                    visible:ringInfo.ring <= 1,
-                    revealed:ringInfo.ring === 0,
-                    stable:false,
+                    revealed:true,
+                    playable,
                     element:null
                 });
 
             }
 
-        });
+        }
 
     }
 
-    function addEdge(a, b){
+    function addEdge(a, b, dynamic = false){
 
         const edgeId = [a, b].sort().join('__');
 
-        if(edges.some(edge => edge.id === edgeId)) return;
+        const existing = edges.find(edge => edge.id === edgeId);
+
+        if(existing){
+            if(dynamic) existing.dynamic = true;
+            return;
+        }
 
         edges.push({
             id:edgeId,
             a,
-            b
+            b,
+            dynamic
         });
 
     }
@@ -1420,21 +1567,19 @@ if(hero && topNav){
 
         edges = [];
 
-        const maxRing = 4;
-
-        for(let ring = 1; ring <= maxRing; ring++){
+        for(let ring = 1; ring <= RING_COUNT; ring++){
 
             const ringNodes = nodes.filter(node => node.ring === ring);
 
             ringNodes.forEach((node, index) => {
 
                 const nextNode = ringNodes[(index + 1) % ringNodes.length];
-                const prevNode = ringNodes[(index - 1 + ringNodes.length) % ringNodes.length];
 
                 addEdge(node.id, nextNode.id);
 
-                if(index % 3 === 0){
-                    addEdge(node.id, prevNode.id);
+                if(index % 4 === 0){
+                    const farNode = ringNodes[(index + 2) % ringNodes.length];
+                    addEdge(node.id, farNode.id);
                 }
 
             });
@@ -1450,21 +1595,23 @@ if(hero && topNav){
 
         nodes.forEach(node => {
 
-            if(node.ring <= 0 || node.ring >= maxRing) return;
+            if(node.ring <= 0 || node.ring >= RING_COUNT) return;
 
             const nextRingNodes = nodes.filter(otherNode => otherNode.ring === node.ring + 1);
 
-            const sortedByDistance = nextRingNodes
+            const nearest = nextRingNodes
                 .map(otherNode => {
                     return {
                         node:otherNode,
                         distance:Math.hypot(otherNode.x - node.x, otherNode.y - node.y)
                     };
                 })
-                .sort((a, b) => a.distance - b.distance);
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 2);
 
-            addEdge(node.id, sortedByDistance[0].node.id);
-            addEdge(node.id, sortedByDistance[1].node.id);
+            nearest.forEach(item => {
+                addEdge(node.id, item.node.id);
+            });
 
         });
 
@@ -1476,18 +1623,25 @@ if(hero && topNav){
 
         layerRingsGroup.innerHTML = '';
 
-        [150, 265, 375, 470].forEach(radius => {
+        for(let ring = 1; ring <= RING_COUNT; ring++){
 
-            const ring = createSvgElement('circle', {
-                class:'exp-layer-ring',
-                cx:500,
-                cy:500,
+            const radius = FIRST_RADIUS + (ring - 1) * RING_GAP;
+
+            const ringPlayableClass = ring <= PLAYABLE_RING_LIMIT
+                ? 'is-playable-ring'
+                : 'is-filler-ring';
+
+            const circle = createSvgElement('circle', {
+                class:`exp-layer-ring ${getDepthClass(ring)} ${ringPlayableClass}`,
+                cx:boardCenterX,
+                cy:boardCenterY,
                 r:radius
             });
+            
+            circle.style.setProperty('--wave-delay', `${ring * .09}s`);
+            layerRingsGroup.appendChild(circle);
 
-            layerRingsGroup.appendChild(ring);
-
-        });
+        }
 
     }
 
@@ -1504,14 +1658,27 @@ if(hero && topNav){
 
             if(!a || !b) return;
 
+            const edgeRing = Math.max(a.ring, b.ring);
+            const depthClass = getDepthClass(edgeRing);
+            const dynamicClass = edge.dynamic ? 'is-dynamic' : '';
+
+            const edgePlayableClass = edgeRing <= PLAYABLE_RING_LIMIT
+                ? 'is-playable-edge'
+                : 'is-filler-edge';
+
             const line = createSvgElement('line', {
-                class:'exp-base-edge',
+                class:`exp-base-edge ${depthClass} ${dynamicClass} ${edgePlayableClass}`,
                 x1:a.x,
                 y1:a.y,
                 x2:b.x,
                 y2:b.y
             });
-
+            line.style.setProperty(
+                '--wave-delay',
+                `${Math.max(a.ring, b.ring) * .09}s`
+            );
+            line.__edgeA = edge.a;
+            line.__edgeB = edge.b;
             baseEdgesGroup.appendChild(line);
 
         });
@@ -1525,36 +1692,39 @@ if(hero && topNav){
         fogLayer.innerHTML = '';
         fogElements = [];
 
-        [
-            { ring:2, r:310 },
-            { ring:3, r:420 },
-            { ring:4, r:520 }
-        ].forEach(item => {
+        for(let ring = 4; ring <= RING_COUNT; ring++){
 
             const fog = createSvgElement('circle', {
-                class:'exp-fog',
-                cx:500,
-                cy:500,
-                r:item.r,
-                'data-fog-ring':item.ring
+                class:`exp-fog ${getDepthClass(ring)}`,
+                cx:boardCenterX,
+                cy:boardCenterY,
+                r:FIRST_RADIUS + (ring - 1) * RING_GAP
             });
 
             fogElements.push(fog);
             fogLayer.appendChild(fog);
 
-        });
+        }
 
     }
 
-    function updateFog(){
+    function getCellPoints(node){
 
-        fogElements.forEach(fog => {
+        const radius = node.size / 2;
+        const points = [];
 
-            const ring = Number(fog.getAttribute('data-fog-ring'));
+        for(let i = 0; i < 8; i++){
 
-            fog.classList.toggle('is-hidden', ring <= unlockedRing);
+            const angle = Math.PI / 8 + i * Math.PI / 4;
 
-        });
+            points.push([
+                node.x + Math.cos(angle) * radius,
+                node.y + Math.sin(angle) * radius
+            ]);
+
+        }
+
+        return points.map(point => point.join(',')).join(' ');
 
     }
 
@@ -1564,36 +1734,26 @@ if(hero && topNav){
 
         nodes.forEach(node => {
 
-            const cell = createSvgElement('rect', {
-                class:'exp-cell',
-                x:node.x - node.size / 2,
-                y:node.y - node.size / 2,
-                width:node.size,
-                height:node.size,
-                rx:node.size * .28,
-                ry:node.size * .28,
+            const cell = createSvgElement('polygon', {
+                class:`exp-cell is-visible ${getDepthClass(node.ring)} ${node.playable ? 'is-playable' : 'is-filler'}`,
+                points:getCellPoints(node),
                 'data-node-id':node.id,
                 'data-color':node.color
             });
 
-            cell.addEventListener('click', () => {
-                moveToNode(node.id);
-            });
+            cell.style.setProperty('--wave-delay', `${node.ring * .12}s`);
+
+            if(node.playable){
+                cell.addEventListener('click', () => {
+                    moveToNode(node.id);
+                });
+            }
 
             node.element = cell;
 
             cellsLayer.appendChild(cell);
 
         });
-
-    }
-
-    function updateCellPosition(node){
-
-        if(!node || !node.element) return;
-
-        node.element.setAttribute('x', node.x - node.size / 2);
-        node.element.setAttribute('y', node.y - node.size / 2);
 
     }
 
@@ -1610,22 +1770,12 @@ if(hero && topNav){
             id:'expPlayer',
             cx:startNode.x,
             cy:startNode.y,
-            r:18
+            r:22
         });
 
         player.style.fill = selectedPlayerColor;
 
         playerLayer.appendChild(player);
-
-    }
-
-    function updatePlayerColor(){
-
-        const player = document.getElementById('expPlayer');
-
-        if(player){
-            player.style.fill = selectedPlayerColor;
-        }
 
     }
 
@@ -1641,16 +1791,37 @@ if(hero && topNav){
 
     }
 
+    function updatePlayerColor(){
+
+        const player = document.getElementById('expPlayer');
+
+        if(player){
+            player.style.fill = selectedPlayerColor;
+        }
+
+    }
+
     function getAvailableNodeIds(){
 
         if(!currentNodeId) return [];
 
-        return getConnectedNodeIds(currentNodeId)
-            .map(id => getNode(id))
-            .filter(Boolean)
-            .filter(node => node.visible || node.revealed || node.stable)
-            .filter(node => node.ring <= unlockedRing || node.revealed || node.stable)
-            .map(node => node.id);
+        return getConnectedNodeIds(currentNodeId).filter(id => {
+
+            const node = getNode(id);
+
+            if(!node) return false;
+            if(!node.playable) return false;
+            if(id === currentNodeId) return false;
+
+            /*
+                No permite volver hacia una casilla ya recorrida
+                dentro de la ruta actual.
+            */
+            if(currentRouteNodeIds.includes(id)) return false;
+
+            return true;
+
+        });
 
     }
 
@@ -1660,60 +1831,99 @@ if(hero && topNav){
 
         nodes.forEach(node => {
 
-            if(node.ring <= unlockedRing || node.revealed || node.stable){
-                node.visible = true;
-            }
+            if(!node.element) return;
+
+            node.element.classList.toggle('is-current', node.id === currentNodeId);
+            node.element.classList.toggle('is-available', availableIds.includes(node.id) && !isComplete);
+
+        });
+        updateBlackholeGuides();
+    }
+
+    function clearBlackholeGuides(){
+
+        blackholeGuideLines.forEach(line => {
+            line.remove();
+        });
+
+        blackholeGuideLines = [];
+
+    }
+
+    function updateBlackholeGuides(){
+
+        clearBlackholeGuides();
+
+        if(!root.classList.contains('fx-blackhole')) return;
+        if(!baseEdgesGroup || !currentNodeId) return;
+
+        const currentNode = getNode(currentNodeId);
+
+        if(!currentNode) return;
+
+        const availableIds = getAvailableNodeIds();
+
+        availableIds.forEach((id, index) => {
+
+            const targetNode = getNode(id);
+
+            if(!targetNode) return;
+
+            const guide = createSvgElement('line', {
+                class:'exp-blackhole-guide',
+                x1:currentNode.x,
+                y1:currentNode.y,
+                x2:targetNode.x,
+                y2:targetNode.y
+            });
+
+            guide.style.setProperty('--guide-delay', `${index * .12}s`);
+
+            baseEdgesGroup.appendChild(guide);
+            blackholeGuideLines.push(guide);
+
+        });
+
+    }
+    
+    function updateCursorReveal(event){
+
+        if(!boardSvg || !nodes.length) return;
+
+        const screenMatrix = boardSvg.getScreenCTM();
+
+        if(!screenMatrix) return;
+
+        const point = boardSvg.createSVGPoint();
+
+        point.x = event.clientX;
+        point.y = event.clientY;
+
+        const svgPoint = point.matrixTransform(screenMatrix.inverse());
+
+        const mouseX = svgPoint.x;
+        const mouseY = svgPoint.y;
+
+        nodes.forEach(node => {
 
             if(!node.element) return;
 
-            node.element.classList.toggle('is-visible', node.visible);
-            node.element.classList.toggle('is-revealed', node.revealed);
-            node.element.classList.toggle('is-current', node.id === currentNodeId);
-            node.element.classList.toggle('is-available', availableIds.includes(node.id) && !isComplete);
-            node.element.classList.toggle('is-stable', node.stable);
+            const distance = Math.hypot(
+                node.x - mouseX,
+                node.y - mouseY
+            );
+
+            /*
+                Area de revelado. Mayor n° variable > mayor área de revelado.
+            */
+            const cellRadius = node.size * .56;
+            const revealMargin = node.playable ? 72 : 62;
+
+            const nearCursor = distance < cellRadius + revealMargin;
+
+            node.element.classList.toggle('is-near-cursor', nearCursor);
 
         });
-
-        updateFog();
-
-    }
-
-    function updateStepDots(){
-
-        stepDots.forEach((dot, index) => {
-            dot.classList.toggle('is-filled', index < stepCount);
-        });
-
-    }
-
-    function updateProgress(){
-
-        const revealedAmount = nodes.filter(node => node.revealed).length;
-        const progress = revealedAmount / nodes.length;
-
-        const offset = totalProgressLength - totalProgressLength * progress;
-
-        if(progressFill){
-            progressFill.style.strokeDashoffset = offset;
-        }
-
-        if(progress >= 1 && !isComplete){
-
-            isComplete = true;
-
-            nodes.forEach(node => {
-                node.visible = true;
-                node.revealed = true;
-            });
-
-            finishCurrentRoute();
-            updateCells();
-
-            if(boardWrap){
-                boardWrap.classList.add('is-complete');
-            }
-
-        }
 
     }
 
@@ -1738,176 +1948,304 @@ if(hero && topNav){
 
     }
 
-    function revealNode(node){
+    function finishCurrentRoute(){
 
-        if(!node) return;
-
-        node.visible = true;
-        node.revealed = true;
-
-    }
-
-    function revealNeighbors(node){
-
-        getConnectedNodeIds(node.id).forEach(id => {
-
-            const neighbor = getNode(id);
-
-            if(!neighbor) return;
-
-            neighbor.visible = true;
-            neighbor.revealed = true;
-
+        currentRouteLines.forEach(line => {
+            line.classList.remove('is-active');
+            line.classList.add('is-past');
         });
 
-    }
+        currentRouteLines = [];
 
-    function stabilizeZone(node){
-
-        node.stable = true;
-
-        getConnectedNodeIds(node.id).forEach(id => {
-
-            const neighbor = getNode(id);
-
-            if(!neighbor) return;
-
-            neighbor.visible = true;
-            neighbor.stable = true;
-
-        });
+        routeIndex++;
+        selectedTrailColor = getRouteColor();
 
     }
 
-    function rotateRing(ring){
+    function createAtmosphereBlob(node){
 
-        const targetRing = Math.max(1, ring);
-        const ringNodes = nodes.filter(node => node.ring === targetRing);
+        if(!atmosphereLayer) return;
 
-        if(!ringNodes.length) return;
+        const blob = document.createElement('i');
 
-        const angle = (360 / ringNodes.length) * Math.PI / 180;
+        const color = atmosphereColors[Math.floor(Math.random() * atmosphereColors.length)];
 
-        ringNodes.forEach(node => {
+        blob.className = 'exp-atmosphere-blob';
+        blob.style.left = `${(node.x / boardWidth) * 100}%`;
+        blob.style.top = `${(node.y / boardHeight) * 100}%`;
+        blob.style.background = `radial-gradient(circle, ${color}, transparent 68%)`;
 
-            const dx = node.x - 500;
-            const dy = node.y - 500;
+        atmosphereLayer.appendChild(blob);
 
-            const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
-            const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+        setTimeout(() => {
+            blob.remove();
+        }, 5600);
 
-            node.x = 500 + rotatedX;
-            node.y = 500 + rotatedY;
+    }
 
-            updateCellPosition(node);
+    function weaveNewPaths(node){
 
+        const connected = getConnectedNodeIds(node.id);
+
+        const candidates = nodes
+            .filter(candidate => {
+                if(candidate.id === node.id) return false;
+                if(candidate.ring === 0) return false;
+                if(!candidate.playable) return false;
+                if(connected.includes(candidate.id)) return false;
+
+                return Math.abs(candidate.ring - node.ring) <= 2;
+            })
+            .map(candidate => {
+                return {
+                    node:candidate,
+                    distance:Math.hypot(candidate.x - node.x, candidate.y - node.y)
+                };
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(1, 5);
+
+        candidates.forEach(item => {
+            addEdge(node.id, item.node.id, true);
         });
 
         renderBaseEdges();
-        updatePlayerPosition();
+        updateCells();
 
     }
 
-    function returnFogFrom(node){
-
-        unlockedRing = Math.max(1, node.ring);
-
-        nodes.forEach(item => {
-
-            if(item.ring > unlockedRing && !item.revealed && !item.stable){
-                item.visible = false;
-            }
-
-        });
-
-        updateFog();
-
-    }
-
-    function shiftBoard(){
+    function distortSpace(){
 
         if(!boardWrap) return;
 
-        boardWrap.classList.remove('is-shifting');
+        const tiltX = `${Math.random() * 12 - 6}deg`;
+        const tiltY = `${Math.random() * 14 - 7}deg`;
 
-        void boardWrap.offsetWidth;
+        boardWrap.style.setProperty('--exp-tilt-x', tiltX);
+        boardWrap.style.setProperty('--exp-tilt-y', tiltY);
 
-        boardWrap.classList.add('is-shifting');
+        boardWrap.classList.add('is-spatial');
 
         setTimeout(() => {
-            boardWrap.classList.remove('is-shifting');
-        }, 920);
+            boardWrap.classList.remove('is-spatial');
+        }, 1500);
 
     }
 
-    function interruptAt(node){
+    function registerTransformation(color){
 
-        if(!node || !node.element) return;
+        const key = colorKeys[color];
 
-        node.element.classList.add('is-interruption');
+        if(!key || isComplete) return;
+
+        transformSequence.push(key);
+
+        if(transformSequence.length > 5){
+            transformSequence.shift();
+        }
+
+        updateSequencePanel();
+
+        const sequenceKey = transformSequence.join('');
+
+        if(transformSequence.length === 5 && transformFinals[sequenceKey]){
+            triggerInterference(sequenceKey);
+        }
+
+    }
+
+    function updateSequencePanel(){
+
+        const sequenceKey = transformSequence.join('');
+
+        comboRows.forEach(row => {
+
+            const combo = row.getAttribute('data-exp-combo');
+
+            row.classList.toggle(
+                'is-current',
+                sequenceKey.length > 0 && combo.startsWith(sequenceKey)
+            );
+
+            row.classList.toggle(
+                'is-complete',
+                sequenceKey.length === 5 && combo === sequenceKey
+            );
+
+            row.classList.toggle(
+                'is-discovered',
+                discoveredSequences.has(combo)
+            );
+
+        });
+
+        if(progressFill){
+            progressFill.style.width = `${(transformSequence.length / 5) * 100}%`;
+        }
+
+        if(progressLabel){
+
+            if(transformSequence.length === 0){
+                progressLabel.textContent = 'Encadena 5 transformaciones';
+            }else{
+                progressLabel.textContent = `Serie: ${transformSequence.join(' + ').toUpperCase()}`;
+            }
+
+        }
+
+    }
+
+    function stopWaveEffect(){
+        /*
+            No se limpian estilos por frame porque el wave
+            ya no modifica elementos directamente con JS.
+        */
+    }
+
+    function startWaveEffect(){
+        /*
+            El efecto wave ahora se ejecuta por CSS,
+            no por requestAnimationFrame.
+        */
+    }
+
+    function returnCharacterToCenter(){
+
+        finishCurrentRoute();
+
+        currentNodeId = checkpointNodeId;
+        currentRouteNodeIds = [checkpointNodeId];
+
+        updatePlayerPosition();
+        updatePlayerColor();
+        updateCells();
+
+    }
+
+    function triggerInterference(sequenceKey){
+
+        const finalData = transformFinals[sequenceKey];
+
+        if(!finalData) return;
+
+        discoveredSequences.add(sequenceKey);
+        updateSequencePanel();
+
+        clearTimeout(interferenceTimer);
+        clearTimeout(interferenceLoadingTimer);
+
+        if(finalOverlay){
+            finalOverlay.setAttribute('aria-hidden', 'false');
+            finalOverlay.setAttribute('data-state', 'loading');
+        }
+
+        if(finalLabel){
+            finalLabel.textContent = `Cargando ${finalData.label}...`;
+        }
+
+        root.classList.remove(...INTERFERENCE_CLASSES);
+        root.classList.add('is-interference-loading');
+
+        interferenceLoadingTimer = setTimeout(() => {
+
+            root.classList.remove('is-interference-loading');
+            root.classList.add(finalData.className);
+            root.classList.add('is-final');
+
+            if(finalOverlay){
+                finalOverlay.setAttribute('data-state', 'active');
+            }
+
+            if(finalLabel){
+                finalLabel.textContent = finalData.label;
+            }
+
+            if(trailLayer){
+                trailLayer.querySelectorAll('.exp-trail').forEach(line => {
+                    line.classList.add('is-final');
+                });
+            }
+
+            returnCharacterToCenter();
+
+            interferenceTimer = setTimeout(() => {
+
+                transformSequence = [];
+                updateSequencePanel();
+
+                if(finalOverlay){
+                    finalOverlay.setAttribute('aria-hidden', 'true');
+                    finalOverlay.removeAttribute('data-state');
+                }
+
+                root.classList.remove('is-final');
+
+            }, 950);
+
+        }, 320);
+    }
+
+    function scatterCells(){
+
+        nodes.forEach(node => {
+
+            if(!node.element || node.ring === 0) return;
+
+            const angle = Math.atan2(
+                node.y - boardCenterY,
+                node.x - boardCenterX
+            );
+
+            const force = 34 + node.ring * 12;
+            const rotate = Math.random() * 80 - 40;
+
+            node.element.classList.add('is-scattered');
+
+            node.element.style.transform = `
+                translate(${Math.cos(angle) * force}px, ${Math.sin(angle) * force}px)
+                rotate(${rotate}deg)
+            `;
+
+        });
 
         setTimeout(() => {
 
-            node.element.classList.remove('is-interruption');
-            finishCurrentRoute();
-            returnToCheckpoint(false);
+            nodes.forEach(node => {
 
-        }, 650);
+                if(!node.element) return;
+
+                node.element.style.transform = '';
+                node.element.classList.remove('is-scattered');
+
+            });
+
+        }, 1600);
 
     }
 
     function applyColorEvent(node){
 
-        if(!node) return;
+        if(!node || node.color === 'yellow') return;
 
-        if(node.color === 'blue'){
-
-            revealEffectInfo('blue');
-
-            rotateRing(node.ring);
-            returnFogFrom(node);
-            shiftBoard();
-
-        }
+        registerTransformation(node.color);
 
         if(node.color === 'green'){
+            createAtmosphereBlob(node);
+        }
 
-            revealEffectInfo('green');
-
-            revealNeighbors(node);
-            stabilizeZone(node);
-
+        if(node.color === 'blue'){
+            weaveNewPaths(node);
         }
 
         if(node.color === 'red'){
-
-            revealEffectInfo('red');
-
-            interruptAt(node);
-
+            distortSpace();
         }
-
-        if(node.color === 'yellow'){
-
-            revealEffectInfo('yellow');
-
-        }
-
-    }
-
-    function completeStep(node){
-
-        revealNode(node);
-        applyColorEvent(node);
-
-        updateCells();
-        updateProgress();
 
     }
 
     function moveToNode(nodeId){
 
-        if(isComplete || !selectedCharacter) return;
+        if(!selectedCharacter) return;
 
         const availableIds = getAvailableNodeIds();
 
@@ -1919,59 +2257,39 @@ if(hero && topNav){
 
         drawTrail(previousNodeId, currentNodeId);
 
+        if(!currentRouteNodeIds.includes(previousNodeId)){
+            currentRouteNodeIds.push(previousNodeId);
+        }
+
+        if(!currentRouteNodeIds.includes(currentNodeId)){
+            currentRouteNodeIds.push(currentNodeId);
+        }
+
         const currentNode = getNode(currentNodeId);
 
-        if(currentNode && currentNode.color !== 'yellow'){
-            stepCount++;
-        }
-
-        if(stepCount >= 3){
-
-            stepCount = 0;
-            completeStep(currentNode);
-
-        }
+        applyColorEvent(currentNode);
 
         updatePlayerPosition();
         updatePlayerColor();
-        updateStepDots();
         updateCells();
 
         const hasOptions = getAvailableNodeIds().length > 0;
 
-        if(!hasOptions && !isComplete){
-
+        if(!hasOptions){
             setTimeout(() => {
-                finishCurrentRoute();
-                returnToCheckpoint(false);
-            }, 500);
-
+                returnCharacterToCenter();
+            }, 450);
         }
-
-    }
-
-    function returnToCheckpoint(shouldFinishRoute = true){
-
-        if(isComplete) return;
-
-        if(shouldFinishRoute && currentRouteLines.length > 0){
-            finishCurrentRoute();
-        }
-
-        currentNodeId = checkpointNodeId;
-        stepCount = 0;
-
-        updatePlayerPosition();
-        updatePlayerColor();
-        updateStepDots();
-        updateCells();
 
     }
 
     function selectCharacter(character){
 
+        if(!characterColors[character]) return;
+
         selectedCharacter = character;
         selectedPlayerColor = characterColors[character];
+
         routeIndex = 0;
         selectedTrailColor = getRouteColor();
 
@@ -1999,8 +2317,11 @@ if(hero && topNav){
 
         root.classList.add('is-board-active');
 
-        revealEffectInfo('yellow');
-        returnToCheckpoint(false);
+        currentNodeId = checkpointNodeId;
+        currentRouteNodeIds = [checkpointNodeId];
+
+        updatePlayerPosition();
+        updateCells();
 
     }
 
@@ -2010,134 +2331,55 @@ if(hero && topNav){
 
     }
 
-    function absorbTrailsToCenter(callback){
+    function resetExperiment(){
 
-        if(!trailLayer){
-            callback();
-            return;
-        }
+        root.classList.remove(
+            'is-final',
+            ...INTERFERENCE_CLASSES
+        );
 
-        const trails = Array.from(trailLayer.querySelectorAll('.exp-trail'));
+        clearBlackholeGuides();
+        
+        discoveredSequences.clear();
+        stopWaveEffect();
+        activeInterference = null;
 
-        if(!trails.length){
-            callback();
-            return;
+        if(finalOverlay){
+            finalOverlay.setAttribute('aria-hidden', 'true');
         }
 
         if(boardWrap){
-            boardWrap.classList.add('is-resetting');
+            boardWrap.classList.remove('is-spatial');
         }
 
-        const centerX = 500;
-        const centerY = 500;
-
-        const duration = 900;
-        const startTime = performance.now();
-
-        const trailData = trails.map(line => {
-
-            line.classList.add('is-absorbing');
-            line.classList.remove('is-past');
-
-            return {
-                line,
-                x1:Number(line.getAttribute('x1')),
-                y1:Number(line.getAttribute('y1')),
-                x2:Number(line.getAttribute('x2')),
-                y2:Number(line.getAttribute('y2'))
-            };
-
-        });
-
-        function easeInOut(t){
-            return t < .5
-                ? 4 * t * t * t
-                : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        if(trailLayer){
+            trailLayer.innerHTML = '';
         }
 
-        function animate(now){
-
-            const rawProgress = Math.min((now - startTime) / duration, 1);
-            const progress = easeInOut(rawProgress);
-
-            trailData.forEach(item => {
-
-                const x1 = item.x1 + (centerX - item.x1) * progress;
-                const y1 = item.y1 + (centerY - item.y1) * progress;
-                const x2 = item.x2 + (centerX - item.x2) * progress;
-                const y2 = item.y2 + (centerY - item.y2) * progress;
-
-                item.line.setAttribute('x1', x1);
-                item.line.setAttribute('y1', y1);
-                item.line.setAttribute('x2', x2);
-                item.line.setAttribute('y2', y2);
-
-                item.line.style.opacity = String(1 - progress * .9);
-
-            });
-
-            if(rawProgress < 1){
-
-                requestAnimationFrame(animate);
-
-            }else{
-
-                if(boardWrap){
-                    boardWrap.classList.remove('is-resetting');
-                }
-
-                callback();
-
-            }
-
+        if(atmosphereLayer){
+            atmosphereLayer.innerHTML = '';
         }
 
-        requestAnimationFrame(animate);
+        transformSequence = [];
+        isComplete = false;
 
-    }
+        routeIndex = 0;
+        selectedTrailColor = getRouteColor();
+        currentRouteLines = [];
 
-    function resetExperiment(){
+        currentNodeId = checkpointNodeId;
+        currentRouteNodeIds = [checkpointNodeId];
 
-        absorbTrailsToCenter(() => {
+        viewScale = INITIAL_VIEW_SCALE;
+        viewOffsetX = 0;
+        viewOffsetY = 0;
+        updateSvgViewBox();
 
-            if(boardWrap){
-                boardWrap.classList.remove('is-complete', 'is-shifting');
-            }
+        updatePlayerPosition();
+        updatePlayerColor();
+        updateSequencePanel();
+        updateCells();
 
-            if(trailLayer){
-                trailLayer.innerHTML = '';
-            }
-
-            resetEffectInfo();
-
-            buildNodes();
-            buildEdges();
-
-            startNodeId = makeNodeId(0, 0);
-            checkpointNodeId = startNodeId;
-            currentNodeId = startNodeId;
-
-            unlockedRing = 1;
-            stepCount = 0;
-            isComplete = false;
-
-            routeIndex = 0;
-            selectedTrailColor = getRouteColor();
-            currentRouteLines = [];
-
-            renderLayerRings();
-            renderBaseEdges();
-            renderFog();
-            renderCells();
-            renderPlayer();
-
-            updateCells();
-            updateStepDots();
-            updateProgress();
-
-            revealEffectInfo('yellow');
-
-        });
     }
 
     function initBoard(){
@@ -2148,6 +2390,7 @@ if(hero && topNav){
         startNodeId = makeNodeId(0, 0);
         checkpointNodeId = startNodeId;
         currentNodeId = startNodeId;
+        currentRouteNodeIds = [checkpointNodeId];
 
         renderLayerRings();
         renderBaseEdges();
@@ -2155,9 +2398,11 @@ if(hero && topNav){
         renderCells();
         renderPlayer();
 
+        transformSequence = [];
+        isComplete = false;
+
+        updateSequencePanel();
         updateCells();
-        updateStepDots();
-        updateProgress();
 
     }
 
@@ -2184,6 +2429,124 @@ if(hero && topNav){
     if(resetButton){
         resetButton.addEventListener('click', resetExperiment);
     }
+
+    if(boardWrap){
+
+        boardWrap.addEventListener('wheel', event => {
+
+            boardWrap.addEventListener('mousemove', updateCursorReveal);
+
+            boardWrap.addEventListener('mouseleave', () => {
+
+                nodes.forEach(node => {
+
+                    if(node.element){
+                        node.element.classList.remove('is-near-cursor');
+                    }
+
+                });
+
+            });
+
+            event.preventDefault();
+
+            const direction = event.deltaY > 0 ? 1 : -1;
+
+            viewScale = clamp(
+                viewScale + direction * .08,
+                MIN_VIEW_SCALE,
+                MAX_VIEW_SCALE
+            );
+
+            updateSvgViewBox();
+
+        }, { passive:false });
+
+        boardWrap.addEventListener('pointerdown', event => {
+
+            if(!isHoldingH) return;
+
+            isPanning = true;
+
+            panStart = {
+                x:event.clientX,
+                y:event.clientY,
+                offsetX:viewOffsetX,
+                offsetY:viewOffsetY
+            };
+
+            boardWrap.setPointerCapture(event.pointerId);
+
+        });
+
+        boardWrap.addEventListener('pointermove', event => {
+
+            if(!isPanning) return;
+
+            const visibleWidth = boardWidth * viewScale;
+            const visibleHeight = boardHeight * viewScale;
+
+            const ratioX = visibleWidth / window.innerWidth;
+            const ratioY = visibleHeight / window.innerHeight;
+
+            const dx = event.clientX - panStart.x;
+            const dy = event.clientY - panStart.y;
+
+            viewOffsetX = panStart.offsetX - dx * ratioX;
+            viewOffsetY = panStart.offsetY - dy * ratioY;
+
+            updateSvgViewBox();
+
+        });
+
+        boardWrap.addEventListener('pointerup', event => {
+
+            isPanning = false;
+
+            if(boardWrap.hasPointerCapture(event.pointerId)){
+                boardWrap.releasePointerCapture(event.pointerId);
+            }
+
+        });
+
+        boardWrap.addEventListener('mousemove', updateCursorReveal);
+
+        boardWrap.addEventListener('mouseleave', () => {
+
+            nodes.forEach(node => {
+
+                if(node.element){
+                    node.element.classList.remove('is-near-cursor');
+                }
+
+            });
+
+        });
+
+    }
+
+    window.addEventListener('keydown', event => {
+
+        if(event.key.toLowerCase() !== 'h') return;
+
+        isHoldingH = true;
+        root.classList.add('is-pan-mode');
+
+    });
+
+    window.addEventListener('keyup', event => {
+
+        if(event.key.toLowerCase() !== 'h') return;
+
+        isHoldingH = false;
+        isPanning = false;
+        root.classList.remove('is-pan-mode');
+
+    });
+
+    window.addEventListener('resize', () => {
+        initBoard();
+    });
 
     initBoard();
 

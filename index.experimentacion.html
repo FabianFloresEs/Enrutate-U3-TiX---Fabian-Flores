@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experimentación Enrútate</title>
+    <link rel="stylesheet" href="style.Experimentacion.css">
+</head>
+<body class="experimentacion-page">
+
+    <main class="exp-root" id="expRoot">
+
+        <!-- ENTRADA -->
+        <section class="exp-entry" id="expEntry">
+
+            <a class="exp-landing-link" href="index.html" aria-label="Volver al Landing">
+                ←
+            </a>
+
+            <div class="exp-entry-center">
+
+                <div class="exp-entry-intro">
+                    <p class="exp-entry-note">
+                        Escoge un color para tu personaje
+                    </p>
+
+                    <p class="exp-entry-subnote">
+                        Encadena cinco transformaciones y observa cómo el recorrido modifica el tablero.
+                    </p>
+                </div>
+
+                <div class="exp-character-picker" aria-label="Seleccionar personaje">
+
+                    <button class="exp-character exp-character--violet" type="button" data-exp-character="violet" aria-label="Seleccionar personaje violeta"></button>
+
+                    <button class="exp-character exp-character--pink" type="button" data-exp-character="pink" aria-label="Seleccionar personaje rosado"></button>
+
+                    <button class="exp-character exp-character--orange" type="button" data-exp-character="orange" aria-label="Seleccionar personaje naranja"></button>
+
+                    <button class="exp-character exp-character--cyan" type="button" data-exp-character="cyan" aria-label="Seleccionar personaje cian"></button>
+
+                </div>
+
+                <button class="exp-enter-button" type="button" data-exp-enter aria-label="Entrar al tablero" disabled>
+                    →
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- TABLERO FULL SCREEN -->
+        <section class="exp-board-screen" id="expBoardScreen" aria-label="Tablero interactivo">
+
+            <div class="exp-board-actions">
+
+                <button type="button" data-exp-back-entry aria-label="Volver al inicio">
+                    ←
+                </button>
+
+                <button type="button" data-exp-reset aria-label="Reiniciar experiencia">
+                    ↺
+                </button>
+
+            </div>
+
+            <div class="exp-progress-status" aria-label="Progreso de lectura del tablero">
+                <span id="expProgressLabel">Encadena 5 transformaciones</span>
+
+                <div class="exp-progress-track">
+                    <i id="expProgressFill"></i>
+                </div>
+            </div>
+
+            <div class="exp-board-layout">
+
+                <div class="exp-board-wrap">
+
+                    <div class="exp-atmosphere-layer" id="expAtmosphereLayer"></div>
+
+                    <div class="exp-final-overlay" id="expFinalOverlay" aria-hidden="true">
+                        <span class="exp-final-status">Interferencia activa</span>
+                        <strong id="expFinalLabel">Cargando interferencia...</strong>
+                    </div>
+
+                    <svg class="exp-board-svg" id="expBoardSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Tablero en capas">
+                        <g id="expLayerRings"></g>
+                        <g id="expBaseEdges"></g>
+                        <g id="expFogLayer"></g>
+                        <g id="expTrailLayer"></g>
+                        <g id="expCellsLayer"></g>
+                        <g id="expPlayerLayer"></g>
+                    </svg>
+
+                </div>
+
+                <aside class="exp-combo-panel" aria-label="Series de interferencia">
+
+                    <p class="exp-combo-title">Series de interferencia</p>
+
+                    <div class="exp-combo-row" data-exp-combo="bbbbb">
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i>
+                        <strong>Fantasma</strong>
+                    </div>
+
+                    <div class="exp-combo-row" data-exp-combo="rrrrr">
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i>
+                        <strong>Agujero</strong>
+                    </div>
+
+                    <div class="exp-combo-row" data-exp-combo="ggggg">
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i>
+                        <strong>Ferro</strong>
+                    </div>
+
+                    <div class="exp-combo-row" data-exp-combo="rrrbg">
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i>
+                        <strong>Impacto</strong>
+                    </div>
+
+                    <div class="exp-combo-row" data-exp-combo="grbgb">
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i>
+                        <strong>Matrix</strong>
+                    </div>
+
+                    <div class="exp-combo-row" data-exp-combo="bgrbr">
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--green"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i><span>+</span>
+                        <i class="combo-dot combo-dot--blue"></i><span>+</span>
+                        <i class="combo-dot combo-dot--red"></i>
+                        <strong>Glitch</strong>
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
