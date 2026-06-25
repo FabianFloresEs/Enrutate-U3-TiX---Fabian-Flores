@@ -52,6 +52,25 @@ body{
 .exp-root{
     --exp-player-color:#7C4DFF;
 
+    --ending-card-width:clamp(860px, 58vw, 1040px);
+    --ending-side-width:320px;
+    --ending-gap:clamp(32px, 3vw, 52px);
+
+    --ending-total-width:calc(
+        var(--ending-card-width) +
+        var(--ending-gap) +
+        var(--ending-side-width)
+    );
+
+    --ending-side-left:calc(
+        (100vw - var(--ending-total-width)) / 2 +
+        var(--ending-card-width) +
+        var(--ending-gap)
+    );
+
+    --ending-panel-top:50%;
+    --ending-actions-top:50%;
+
     position:relative;
     width:100%;
     height:100vh;
@@ -181,74 +200,6 @@ body{
     align-items:center;
     justify-content:center;
     gap:14px;
-}
-
-.exp-level-picker{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
-
-    margin-top:2px;
-}
-
-.exp-level{
-    width:155px;
-
-    padding:13px 16px;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:4px;
-
-    border:none;
-    border-radius:22px;
-
-    background:rgba(236,236,236,.58);
-    color:#666;
-
-    font-family:inherit;
-    cursor:pointer;
-
-    opacity:.48;
-
-    box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,.48),
-        0 10px 26px rgba(0,0,0,.08);
-
-    transition:
-        opacity .25s ease,
-        transform .25s ease,
-        background-color .25s ease,
-        box-shadow .25s ease;
-}
-
-.exp-level strong{
-    font-size:.88rem;
-    font-weight:700;
-}
-
-.exp-level span{
-    font-size:.7rem;
-    font-weight:400;
-    line-height:1.2;
-    color:rgba(51,51,51,.62);
-}
-
-.exp-level:hover{
-    opacity:.82;
-    transform:translateY(-2px);
-}
-
-.exp-level.is-selected{
-    opacity:1;
-
-    background:rgba(255,221,14,.78);
-
-    box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,.58),
-        0 14px 34px rgba(0,0,0,.12);
 }
 
 .exp-character{
@@ -467,6 +418,17 @@ body{
     box-shadow:
         inset 0 0 0 1px rgba(255,255,255,.44),
         0 12px 34px rgba(0,0,0,.07);
+
+    transition:
+        left .75s cubic-bezier(.2,.85,.25,1),
+        right .75s cubic-bezier(.2,.85,.25,1),
+        top .75s cubic-bezier(.2,.85,.25,1),
+        bottom .75s cubic-bezier(.2,.85,.25,1),
+        width .75s cubic-bezier(.2,.85,.25,1),
+        transform .75s cubic-bezier(.2,.85,.25,1),
+        background .45s ease,
+        box-shadow .45s ease,
+        opacity .35s ease;
 }
 
 .exp-combo-title{
@@ -489,6 +451,8 @@ body{
     background:rgba(255,255,255,.25);
     opacity:.42;
 }
+
+
 
 .exp-combo-row span{
     color:rgba(51,51,51,.42);
@@ -558,6 +522,70 @@ body{
 .combo-dot--blue{ background:var(--blue); }
 
 /* ================================= */
+/* LEYENDA EN PANTALLA FINAL */
+/* ================================= */
+
+.exp-combo-panel.is-ending-centered{
+    position:fixed;
+    top:var(--ending-panel-top);
+    left:var(--ending-side-left);
+    right:auto;
+    bottom:auto;
+    z-index:110;
+
+    width:var(--ending-side-width);
+
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+
+    padding:16px;
+    border-radius:26px;
+
+    transform:none;
+
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255,221,14,.24), transparent 34%),
+        radial-gradient(circle at 82% 22%, rgba(255,239,150,.14), transparent 32%),
+        rgba(255,247,199,.88);
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.58),
+        0 18px 40px rgba(0,0,0,.10);
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    pointer-events:none;
+}
+
+.exp-combo-panel.is-ending-centered .exp-combo-title{
+    margin:0 0 6px;
+    text-align:center;
+    font-size:.78rem;
+    color:rgba(51,51,51,.72);
+}
+
+.exp-combo-panel.is-ending-centered .exp-combo-row{
+    min-height:38px;
+    opacity:1;
+    background:rgba(255,255,255,.42);
+}
+
+.exp-combo-panel.is-ending-centered .exp-combo-row.is-discovered,
+.exp-combo-panel.is-ending-centered .exp-combo-row.is-complete{
+    background:rgba(255,221,14,.82);
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.58),
+        0 10px 22px rgba(0,0,0,.08);
+}
+
+.exp-combo-panel.is-ending-centered .exp-combo-row strong{
+    color:#333;
+}
+
+/* ================================= */
 /* CAPAS REACTIVAS */
 /* ================================= */
 
@@ -591,10 +619,10 @@ body{
 
 .exp-final-overlay{
     position:fixed;
-    right:24px;
-    bottom:365px;
+    right:28px;
+    bottom:450px;
 
-    width:min(300px, calc(100vw - 48px));
+    width:360px;
     min-height:84px;
 
     padding:14px 16px 18px;
@@ -681,7 +709,7 @@ body{
 
 .exp-root.is-final .exp-final-overlay{
     opacity:1;
-    transform:translateX(-50%) translateY(0);
+    transform:translateY(0);
 }
 
 .exp-final-overlay[data-state="loading"] strong{
@@ -693,21 +721,9 @@ body{
 /* ================================= */
 
 .exp-board-wrap{
-    transform-style:preserve-3d;
     transition:
-        transform .85s cubic-bezier(.2,.8,.2,1),
+        background .85s ease,
         filter .85s ease;
-}
-
-.exp-board-wrap.is-spatial{
-    transform:
-        perspective(1200px)
-        rotateX(var(--exp-tilt-x, 8deg))
-        rotateY(var(--exp-tilt-y, -7deg))
-        scale(1.03);
-
-    filter:
-        drop-shadow(0 30px 70px rgba(0,0,0,.12));
 }
 
 .exp-board-svg{
@@ -859,24 +875,6 @@ body{
     opacity:.16;
 }
 
-.exp-cell.is-available{
-    stroke:#ffffff;
-    stroke-width:8;
-
-    animation:expAvailablePulse 1.4s ease-in-out infinite;
-
-    filter:
-        drop-shadow(0 0 12px rgba(255,255,255,.92))
-        drop-shadow(0 10px 18px rgba(0,0,0,.16));
-}
-
-.exp-cell.is-current{
-    stroke:var(--exp-player-color);
-    stroke-width:12;
-
-    transform:scale(1.12);
-}
-
 .exp-player{
     fill:var(--exp-player-color);
     stroke:white;
@@ -917,17 +915,6 @@ body{
 .exp-cell.is-playable{
     opacity:.34;
     pointer-events:auto;
-}
-
-.exp-cell.is-filler{
-    opacity:.08;
-    pointer-events:none;
-    stroke-width:1.8;
-    filter:none;
-}
-
-.exp-cell.is-depth-fog.is-filler{
-    opacity:.045;
 }
 
 /* Casillas cercanas al puntero */
@@ -972,8 +959,12 @@ body{
     filter:none;
 }
 
-.exp-cell.is-depth-fog.is-filler{
-    opacity:.10;
+.exp-root.fx-blackhole .exp-cell.is-depth-fog.is-filler{
+    opacity:.08;
+}
+
+.exp-root.fx-blackhole .exp-cell.is-depth-far.is-filler{
+    opacity:.12;
 }
 
 .exp-fog{
@@ -1184,35 +1175,21 @@ body{
     }
 }
 
-@keyframes expFinalChromatic{
-    0%{
-        filter:saturate(1) blur(0);
+@keyframes expTransportAppear{
+    0%,100%{
+        transform:scale(var(--transport-scale, .92));
+        opacity:.62;
     }
 
-    50%{
-        filter:saturate(1.6) blur(1px);
+    42%{
+        transform:scale(var(--transport-scale-near, 1.14));
+        opacity:1;
     }
 
-    100%{
-        filter:saturate(1.1) blur(0);
+    72%{
+        transform:scale(var(--transport-scale-mid, 1));
+        opacity:.86;
     }
-}
-
-.exp-root.is-final-ggg .exp-board-wrap{
-    animation:expFinalChromatic 2.8s ease both;
-}
-
-.exp-root.is-final-rrr .exp-board-wrap{
-    transform:
-        perspective(900px)
-        rotateX(14deg)
-        rotateY(-16deg)
-        scale(1.04);
-}
-
-.exp-root.is-final-bbb .exp-base-edge.is-dynamic{
-    stroke-width:8;
-    opacity:1;
 }
 
 .exp-board-wrap::before,
@@ -1234,43 +1211,495 @@ body{
     mix-blend-mode:multiply;
 }
 
-.exp-root.fx-ferro .exp-board-wrap{
-    animation:expSlowOrbit 18s linear infinite;
-    transform:
-        perspective(1050px)
-        rotateX(58deg)
-        rotateZ(0deg)
-        scale(.92);
+/* ================================= */
+/* EFECTO TRASLADO — Verde x5 */
+/* ================================= */
+
+.exp-root.fx-transport .exp-board-wrap{
+    transform:none;
+    animation:none;
+    filter:none;
+
+    background:
+        radial-gradient(circle at 18% 22%, rgba(106,170,44,.20), transparent 30%),
+        radial-gradient(circle at 80% 18%, rgba(255,221,14,.13), transparent 28%),
+        radial-gradient(circle at 22% 82%, rgba(0,143,184,.11), transparent 34%),
+        radial-gradient(circle at 76% 78%, rgba(106,170,44,.15), transparent 32%),
+        #ECECEC;
 }
 
-.exp-root.fx-ferro .exp-board-wrap::before{
-    opacity:.50;
-    background:
-        repeating-conic-gradient(
-            from 0deg at 50% 50%,
-            rgba(106,170,44,.26) 0deg,
-            rgba(20,20,20,.08) 8deg,
-            transparent 14deg,
-            rgba(106,170,44,.20) 22deg
-        );
-    clip-path:circle(34% at 50% 50%);
-    filter:blur(3px);
+.exp-root.fx-transport .exp-base-edge,
+.exp-root.fx-transport .exp-layer-ring,
+.exp-root.fx-transport .exp-fog,
+.exp-root.fx-transport .exp-trail{
+    opacity:0;
+    pointer-events:none;
 }
+
+.exp-root.fx-transport.is-transport-ready .exp-cell{
+    opacity:0;
+    pointer-events:none;
+
+    fill:transparent !important;
+    stroke:rgba(255,255,255,.12) !important;
+
+    transform:scale(.72);
+
+    filter:none;
+
+    transition:
+        opacity .55s ease,
+        transform .55s cubic-bezier(.2,.8,.2,1),
+        filter .55s ease,
+        fill .55s ease,
+        stroke .55s ease;
+}
+
+.exp-root.fx-transport.is-transport-preparing .exp-base-edge,
+.exp-root.fx-transport.is-transport-preparing .exp-layer-ring{
+    opacity:.22;
+}
+
+.exp-root.fx-transport.is-transport-preparing .exp-cell{
+    opacity:.72;
+
+    transition:
+        opacity .65s ease,
+        fill .65s ease,
+        stroke .65s ease,
+        filter .65s ease,
+        transform .65s ease;
+}
+
+.exp-root.fx-transport.is-transport-preparing .exp-cell.is-filler{
+    opacity:.42;
+
+    stroke:rgba(255,255,255,.46) !important;
+    fill:rgba(255,255,255,.12) !important;
+
+    filter:
+        drop-shadow(0 0 10px rgba(255,255,255,.28))
+        drop-shadow(0 8px 14px rgba(0,0,0,.08));
+}
+
+.exp-root.fx-transport .exp-cell.is-transport-current{
+    opacity:1;
+    pointer-events:auto;
+
+    transform:scale(1.18);
+
+    stroke:var(--exp-player-color) !important;
+    stroke-width:11;
+
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,.9))
+        drop-shadow(0 10px 18px rgba(0,0,0,.18));
+}
+
+.exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option{
+    --transport-scale:.92;
+    --transport-scale-near:1.14;
+    --transport-scale-mid:1;
+
+    opacity:1;
+    pointer-events:auto;
+
+    stroke:rgba(255,255,255,.92) !important;
+    stroke-width:7;
+
+    animation:expTransportAppear 2.8s ease-in-out infinite;
+
+    filter:
+        drop-shadow(0 0 14px rgba(255,255,255,.55))
+        drop-shadow(0 10px 18px rgba(0,0,0,.12));
+}
+
+.exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option.is-filler{
+    --transport-scale:1;
+    --transport-scale-near:1.14;
+    --transport-scale-mid:1.04;
+
+    stroke-width:7;
+}
+
+.exp-root.fx-transport .exp-cell.is-transport-option[data-color="blue"]{
+    fill:rgba(0,143,184,.62) !important;
+}
+
+.exp-root.fx-transport .exp-cell.is-transport-option[data-color="green"]{
+    fill:rgba(106,170,44,.62) !important;
+}
+
+.exp-root.fx-transport .exp-cell.is-transport-option[data-color="red"]{
+    fill:rgba(214,36,22,.58) !important;
+}
+
+.exp-root.fx-transport .exp-cell.is-transport-option[data-color="yellow"]{
+    fill:rgba(255,221,14,.72) !important;
+}
+
+.exp-root.fx-transport .exp-player{
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,.95))
+        drop-shadow(0 10px 18px rgba(0,0,0,.22));
+}
+
+/* ================================= */
+/* ================================= */
+/* EFECTOS DE INTERFERENCIA */
+/* ================================= */
+/* ================================= */
+
+
+/* ================================= */
+/* EFECTO IMPACTO — colisión rápida */
+/* ================================= */
 
 .exp-root.fx-impact .exp-board-wrap{
-    animation:expImpactPulse 1.8s ease both;
+    animation:expImpactBoardPulse 1.15s cubic-bezier(.2,.8,.2,1) infinite;
+
+    background:
+        radial-gradient(circle at 20% 22%, rgba(214,36,22,.18), transparent 30%),
+        radial-gradient(circle at 78% 18%, rgba(255,221,14,.12), transparent 30%),
+        radial-gradient(circle at 18% 82%, rgba(0,143,184,.10), transparent 34%),
+        radial-gradient(circle at 82% 82%, rgba(214,36,22,.12), transparent 32%),
+        #ECECEC;
 }
 
-.exp-root.fx-matrix .exp-board-svg{
+.exp-root.fx-impact .exp-base-edge{
+    opacity:.38;
+    stroke:rgba(35,35,35,.22);
+    stroke-width:5.8;
+}
+
+.exp-root.fx-impact .exp-base-edge.is-dynamic{
+    opacity:.72;
+    stroke:rgba(0,143,184,.46);
+    stroke-width:7.2;
+}
+
+.exp-root.fx-impact .exp-layer-ring{
+    opacity:.08;
+}
+
+.exp-root.fx-impact .exp-fog{
+    opacity:.05;
+}
+
+.exp-root.fx-impact .exp-trail{
+    opacity:.52;
+    stroke-width:13;
+
     filter:
-        invert(.88)
-        hue-rotate(155deg)
-        saturate(1.7)
-        contrast(1.22);
+        drop-shadow(0 0 8px rgba(255,255,255,.42))
+        drop-shadow(0 8px 12px rgba(0,0,0,.12));
+}
+
+.exp-root.fx-impact .exp-cell{
+    transition:
+        opacity .18s ease,
+        stroke .18s ease,
+        stroke-width .18s ease,
+        fill .18s ease,
+        filter .18s ease;
+}
+
+.exp-root.fx-impact .exp-cell.is-impacting{
+    animation:expImpactGlow 1.15s ease-in-out infinite;
+    animation-delay:var(--wave-delay, 0s);
+
+    filter:
+        drop-shadow(0 0 10px rgba(255,255,255,.42))
+        drop-shadow(0 8px 14px rgba(0,0,0,.16));
+}
+
+.exp-root.fx-impact .exp-cell.is-playable{
+    opacity:.82;
+}
+
+.exp-root.fx-impact .exp-cell.is-filler{
+    opacity:.10;
+}
+
+.exp-root.fx-impact .exp-cell.is-available.is-impacting{
+    animation:
+        expImpactGlow 1.15s ease-in-out infinite,
+        expAvailablePulse .9s ease-in-out infinite;
+
+    animation-delay:
+        var(--wave-delay, 0s),
+        0s;
+
+    stroke:#ffffff !important;
+    stroke-width:9;
+
+    opacity:1;
+
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,.9))
+        drop-shadow(0 10px 18px rgba(0,0,0,.22));
+}
+
+.exp-root.fx-impact .exp-cell.is-impact-hidden{
+    opacity:0 !important;
+    visibility:hidden;
+    pointer-events:none !important;
+    animation:none !important;
+    filter:none !important;
+}
+
+.exp-root.fx-impact .exp-cell.is-impacting{
+    pointer-events:auto;
+}
+
+.exp-root.fx-impact .exp-cell.is-filler.is-impacting{
+    pointer-events:auto;
+}
+
+.exp-root.fx-impact .exp-cell.is-filler.is-available{
+    pointer-events:auto;
+    opacity:1;
+    stroke:#ffffff !important;
+    stroke-width:7.5;
+
+    filter:
+        drop-shadow(0 0 13px rgba(255,255,255,.72))
+        drop-shadow(0 8px 14px rgba(0,0,0,.16));
+}
+
+.exp-root.fx-impact .exp-cell.is-current{
+    opacity:1;
+    stroke:var(--exp-player-color) !important;
+    stroke-width:12;
+
+    filter:
+        drop-shadow(0 0 14px rgba(255,255,255,.72))
+        drop-shadow(0 10px 18px rgba(0,0,0,.18));
+}
+
+.exp-root.fx-impact .exp-player{
+    animation:expImpactPlayerShake .62s ease-in-out infinite;
+
+    filter:
+        drop-shadow(0 10px 18px rgba(0,0,0,.22))
+        drop-shadow(0 0 16px rgba(255,255,255,.95));
+}
+
+.exp-root.fx-impact.is-impact-dispersing .exp-cell.is-impacting{
+    animation:expImpactEntryGlow .95s ease both;
+
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,.72))
+        drop-shadow(0 10px 18px rgba(0,0,0,.16));
+}
+
+@keyframes expImpactEntryGlow{
+    0%{
+        opacity:.32;
+        stroke-width:4.5;
+    }
+
+    45%{
+        opacity:1;
+        stroke-width:9;
+    }
+
+    100%{
+        opacity:.82;
+        stroke-width:6.4;
+    }
+}
+
+.exp-root.fx-impact .exp-base-edge,
+.exp-root.fx-impact .exp-trail,
+.exp-root.fx-impact .exp-layer-ring,
+.exp-root.fx-impact .exp-blackhole-guide{
+    opacity:0 !important;
+    visibility:hidden;
+    pointer-events:none;
+}
+
+
+
+/* ================================= */
+/* EFECTO MATRIX — permisos por color */
+/* ================================= */
+
+.exp-root.fx-matrix{
+    --matrix-color:rgba(0,143,184,.95);
+    --matrix-color-soft:rgba(0,143,184,.18);
+}
+
+.exp-root.fx-matrix[data-matrix-color="blue"]{
+    --matrix-color:rgba(0,143,184,.95);
+    --matrix-color-soft:rgba(0,143,184,.20);
+}
+
+.exp-root.fx-matrix[data-matrix-color="green"]{
+    --matrix-color:rgba(106,170,44,.95);
+    --matrix-color-soft:rgba(106,170,44,.22);
+}
+
+.exp-root.fx-matrix[data-matrix-color="red"]{
+    --matrix-color:rgba(214,36,22,.92);
+    --matrix-color-soft:rgba(214,36,22,.18);
+}
+
+.exp-root.fx-matrix .exp-board-wrap{
+    background:
+        radial-gradient(circle at 20% 22%, var(--matrix-color-soft), transparent 30%),
+        radial-gradient(circle at 82% 18%, rgba(255,221,14,.10), transparent 30%),
+        radial-gradient(circle at 18% 82%, rgba(0,143,184,.10), transparent 34%),
+        radial-gradient(circle at 82% 82%, var(--matrix-color-soft), transparent 32%),
+        #ECECEC;
+
+    filter:
+        contrast(1.06)
+        saturate(1.18);
+}
+
+.exp-root.fx-matrix .exp-base-edge{
+    opacity:.18;
+    stroke:rgba(30,30,30,.18);
+}
+
+.exp-root.fx-matrix .exp-layer-ring{
+    opacity:.14;
+}
+
+.exp-root.fx-matrix .exp-trail{
+    opacity:.62;
+    stroke-width:14;
+}
+
+.exp-root.fx-matrix .exp-cell{
+    transition:
+        opacity .22s ease,
+        fill .22s ease,
+        stroke .22s ease,
+        stroke-width .22s ease,
+        filter .22s ease,
+        transform .22s ease;
+}
+
+.exp-root.fx-matrix .exp-cell.is-matrix-locked{
+    opacity:.16 !important;
+    pointer-events:none !important;
+
+    fill:rgba(255,255,255,.08) !important;
+    stroke:rgba(255,255,255,.18) !important;
+    stroke-width:2.5;
+
+    filter:none !important;
+}
+
+.exp-root.fx-matrix .exp-cell.is-matrix-active{
+    opacity:.72;
+
+    stroke:var(--matrix-color) !important;
+    stroke-width:5.8;
+
+    filter:
+        drop-shadow(0 0 10px var(--matrix-color-soft))
+        drop-shadow(0 8px 14px rgba(0,0,0,.10));
+}
+
+.exp-root.fx-matrix .exp-cell.is-matrix-active.is-available{
+    opacity:1;
+    pointer-events:auto !important;
+
+    stroke:#ffffff !important;
+    stroke-width:9;
+
+    transform:scale(1.12);
+
+    filter:
+        drop-shadow(0 0 16px var(--matrix-color))
+        drop-shadow(0 10px 18px rgba(0,0,0,.18));
+}
+
+.exp-root.fx-matrix .exp-cell.is-current{
+    opacity:1;
+
+    stroke:var(--exp-player-color) !important;
+    stroke-width:12;
+
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,.92))
+        drop-shadow(0 10px 18px rgba(0,0,0,.18));
+}
+
+.exp-root.fx-matrix .exp-player{
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,.95))
+        drop-shadow(0 10px 18px rgba(0,0,0,.22));
+}
+
+.exp-root.fx-matrix.is-matrix-scanning .exp-board-wrap::before{
+    opacity:.62;
+
+    background:
+        linear-gradient(
+            110deg,
+            transparent 0%,
+            transparent 38%,
+            var(--matrix-color-soft) 46%,
+            var(--matrix-color) 50%,
+            var(--matrix-color-soft) 54%,
+            transparent 64%,
+            transparent 100%
+        );
+
+    filter:blur(4px);
+    mix-blend-mode:multiply;
+
+    animation:expMatrixScan 1.5s ease-out both;
+}
+
+
+
+
+
+.exp-root.fx-glitch.is-glitch-shaking .exp-cell{
+    animation:expGlitchCell .48s steps(2,end) infinite;
+    animation-delay:var(--wave-delay, 0s);
+}   
+
+.exp-root.fx-glitch.is-glitch-shaking .exp-cell.is-available{
+    animation:
+        expGlitchCell .42s steps(2,end) infinite,
+        expAvailablePulse .95s ease-in-out infinite;
+}
+
+.exp-root.fx-glitch.is-glitch-shaking .exp-player{
+    animation:expGlitchPlayer .34s steps(2,end) infinite;
 }
 
 .exp-root.fx-glitch .exp-board-wrap{
-    animation:expGlitchBoard .52s steps(2,end) infinite;
+    animation:none;
+
+    filter:
+        contrast(1.12)
+        saturate(1.18);
+}
+
+.exp-root.fx-glitch.is-glitch-shaking .exp-board-wrap{
+    animation:expGlitchBoard .42s steps(2,end) infinite;
+}
+
+.exp-root.fx-glitch .exp-board-svg{
+    filter:
+        drop-shadow(7px 0 0 rgba(0,143,184,.18))
+        drop-shadow(-7px 0 0 rgba(214,36,22,.16));
+}
+
+.exp-root.fx-glitch #expLayerRings,
+.exp-root.fx-glitch #expBaseEdges,
+.exp-root.fx-glitch #expFogLayer,
+.exp-root.fx-glitch #expTrailLayer,
+.exp-root.fx-glitch #expCellsLayer,
+.exp-root.fx-glitch #expPlayerLayer{
+    transition:transform .22s steps(2,end);
 }
 
 .exp-root.fx-glitch .exp-board-wrap::after{
@@ -1284,65 +1713,149 @@ body{
     filter:blur(2px);
 }
 
-.exp-cell.is-scattered{
-    transition:
-        transform 1.25s cubic-bezier(.2,.8,.2,1),
-        opacity .8s ease;
+
+
+.exp-cell.is-red-pulse{
+    animation:expRedCellPulse .7s ease both;
 }
 
-@keyframes expSlowOrbit{
-    0%{
-        rotate:0deg;
-    }
-
-    100%{
-        rotate:360deg;
-    }
-}
-
-@keyframes expImpactPulse{
-    0%{
+@keyframes expRedCellPulse{
+    0%,100%{
         transform:scale(1);
-        filter:none;
     }
 
-    50%{
-        transform:scale(1.08);
-        filter:contrast(1.18) saturate(1.35);
-    }
-
-    100%{
-        transform:scale(1);
-        filter:none;
+    45%{
+        transform:scale(1.18);
+        filter:
+            drop-shadow(0 0 14px rgba(214,36,22,.45))
+            drop-shadow(0 8px 16px rgba(0,0,0,.14));
     }
 }
+
+@keyframes expImpactBoardPulse{
+    0%,100%{
+        transform:scale(1);
+        filter:contrast(1) saturate(1);
+    }
+
+    42%{
+        transform:scale(1.018);
+        filter:contrast(1.16) saturate(1.28);
+    }
+
+    68%{
+        transform:scale(.994);
+        filter:contrast(1.04) saturate(1.12);
+    }
+}
+
+@keyframes expImpactPlayerShake{
+    0%,100%{
+        transform:translate(0,0);
+    }
+
+    35%{
+        transform:translate(3px,-2px);
+    }
+
+    70%{
+        transform:translate(-2px,3px);
+    }
+}
+
+@keyframes expImpactGlow{
+    0%,100%{
+        opacity:.64;
+        stroke-width:5.8;
+    }
+
+    45%{
+        opacity:1;
+        stroke-width:8.2;
+    }
+
+    72%{
+        opacity:.78;
+        stroke-width:6.4;
+    }
+}
+
+
 
 @keyframes expGlitchBoard{
-    0%{
+    0%,100%{
         transform:translate(0,0);
-        filter:hue-rotate(0deg);
+    }
+
+    18%{
+        transform:translate(10px,-4px);
+    }
+
+    36%{
+        transform:translate(-8px,5px);
+    }
+
+    54%{
+        transform:translate(5px,8px);
+    }
+
+    72%{
+        transform:translate(-12px,-3px);
+    }
+}
+
+@keyframes expGlitchCell{
+    0%,100%{
+        transform:translate(0,0) scale(1);
+        filter:
+            drop-shadow(0 10px 16px rgba(0,0,0,.12))
+            drop-shadow(0 0 8px rgba(255,255,255,.5));
     }
 
     25%{
-        transform:translate(8px,-3px);
-        filter:hue-rotate(70deg);
+        transform:translate(5px,-2px) scale(1.04);
     }
 
     50%{
-        transform:translate(-7px,4px);
-        filter:hue-rotate(-40deg);
+        transform:translate(-4px,3px) scale(.98);
     }
 
     75%{
-        transform:translate(4px,3px);
-        filter:hue-rotate(120deg);
+        transform:translate(2px,5px) scale(1.02);
+    }
+}
+
+@keyframes expGlitchPlayer{
+    0%,100%{
+        transform:translate(0,0);
+    }
+
+    33%{
+        transform:translate(6px,-3px);
+    }
+
+    66%{
+        transform:translate(-4px,5px);
+    }
+}
+
+
+@keyframes expMatrixScan{
+    0%{
+        transform:translateX(-42%) skewX(-12deg);
+        opacity:0;
+    }
+
+    18%{
+        opacity:.62;
     }
 
     100%{
-        transform:translate(0,0);
-        filter:hue-rotate(0deg);
+        transform:translateX(42%) skewX(-12deg);
+        opacity:0;
     }
 }
+
 
 @keyframes expLoadingBar{
     0%{
@@ -1386,31 +1899,6 @@ body{
     50%{
         stroke:rgba(255,255,255,.98);
         opacity:1;
-    }
-}
-
-/* EFECTO AGUJERO — Rojo x5 */
-@keyframes expBlackholeBreath{
-    0%,100%{
-        transform:scale(.94);
-        opacity:.78;
-    }
-
-    50%{
-        transform:scale(1.08);
-        opacity:1;
-    }
-}
-
-@keyframes expBlackholeGuidePulse{
-    0%,100%{
-        opacity:.38;
-        stroke-width:4;
-    }
-
-    50%{
-        opacity:.92;
-        stroke-width:7;
     }
 }
 
@@ -1523,46 +2011,31 @@ body{
 /* EFECTO AGUJERO — Rojo x5 */
 /* ================================= */
 
+.exp-board-screen,
+.exp-board-wrap{
+    transition:
+        background 3.2s ease,
+        filter 1.4s ease,
+        transform 1.4s cubic-bezier(.2,.8,.2,1);
+}
+
 .exp-root.fx-blackhole .exp-board-screen,
 .exp-root.fx-blackhole .exp-board-wrap{
     background:
-        radial-gradient(circle at 50% 50%, rgba(214,36,22,.20), transparent 18%),
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.08), transparent 32%),
-        radial-gradient(circle at 18% 82%, rgba(0,143,184,.10), transparent 34%),
+        radial-gradient(circle at 50% 50%, rgba(214,36,22,.18), transparent 22%),
+        radial-gradient(circle at 20% 80%, rgba(0,143,184,.10), transparent 34%),
+        radial-gradient(circle at 78% 18%, rgba(255,221,14,.08), transparent 28%),
         #050505;
 }
 
 .exp-root.fx-blackhole .exp-board-wrap{
     transform:none;
     animation:none;
+
+    filter:none;
 }
 
-/* Núcleo oscuro, sin patrón tipo mandala */
-.exp-root.fx-blackhole .exp-board-wrap::before{
-    opacity:1;
-
-    background:
-        radial-gradient(
-            circle at 50% 50%,
-            rgba(0,0,0,.62) 0%,
-            rgba(214,36,22,.28) 9%,
-            rgba(0,0,0,.30) 18%,
-            transparent 36%
-        );
-
-    filter:blur(18px);
-    mix-blend-mode:normal;
-
-    animation:expBlackholeBreath 5.8s ease-in-out infinite;
-}
-
-.exp-root.fx-blackhole .exp-board-wrap::after{
-    opacity:0;
-    background:none;
-    animation:none;
-}
-
-/* Se apaga la red completa para eliminar el mandala */
+/* Se elimina lectura tipo mandala */
 .exp-root.fx-blackhole .exp-base-edge,
 .exp-root.fx-blackhole .exp-layer-ring,
 .exp-root.fx-blackhole .exp-fog{
@@ -1571,54 +2044,116 @@ body{
     animation:none;
 }
 
-/* Casillas como piezas en un tablero oscuro */
+/* Casillas como piezas desplazadas */
 .exp-root.fx-blackhole .exp-cell{
     fill:rgba(236,236,236,.06) !important;
-    stroke:rgba(255,255,255,.22) !important;
+    stroke:rgba(255,255,255,.24) !important;
 
     opacity:.20;
 
     filter:
-        drop-shadow(0 4px 8px rgba(0,0,0,.35));
+        drop-shadow(0 8px 14px rgba(0,0,0,.36));
+
+    transition:
+        transform 1.25s cubic-bezier(.2,.8,.2,1),
+        fill .8s ease,
+        stroke .8s ease,
+        opacity .8s ease,
+        filter .8s ease;
 }
 
 /* Jugables más presentes */
 .exp-root.fx-blackhole .exp-cell.is-playable{
-    opacity:.72;
-    fill:rgba(236,236,236,.10) !important;
-    stroke:rgba(255,255,255,.46) !important;
-    stroke-width:5.5;
+    opacity:.78;
+    stroke-width:5.8;
+
+    animation:expBlackholeZRing 4.8s cubic-bezier(.2,.8,.2,1) infinite;
+    animation-delay:var(--blackhole-delay, 0s);
+
+    transform-origin:center;
+    transform-box:fill-box;
+
+    will-change:transform, opacity, filter;
 }
 
-/* Colores drenados, no saturados */
+/* Filler muy sutil */
+.exp-root.fx-blackhole .exp-cell.is-filler{
+    opacity:.18;
+    stroke-width:2.4;
+    fill:rgba(255,255,255,.025) !important;
+    stroke:rgba(255,255,255,.18) !important;
+
+    animation:expBlackholeZRingFiller var(--blackhole-duration, 7.4s) ease-in-out infinite;
+    animation-delay:var(--blackhole-delay, 0s);
+
+    transform-origin:center;
+    transform-box:fill-box;
+
+    filter:
+        drop-shadow(0 0 6px rgba(255,255,255,.06));
+}
+
+/* Colores drenados, no brillantes */
 .exp-root.fx-blackhole .exp-cell[data-color="blue"].is-playable{
-    fill:rgba(0,143,184,.26) !important;
-    stroke:rgba(0,143,184,.62) !important;
+    fill:rgba(0,143,184,.20) !important;
+    stroke:rgba(0,143,184,.55) !important;
 }
 
 .exp-root.fx-blackhole .exp-cell[data-color="green"].is-playable{
-    fill:rgba(106,170,44,.24) !important;
-    stroke:rgba(106,170,44,.60) !important;
+    fill:rgba(106,170,44,.18) !important;
+    stroke:rgba(106,170,44,.52) !important;
 }
 
 .exp-root.fx-blackhole .exp-cell[data-color="red"].is-playable{
-    fill:rgba(214,36,22,.28) !important;
-    stroke:rgba(214,36,22,.68) !important;
+    fill:rgba(214,36,22,.26) !important;
+    stroke:rgba(214,36,22,.72) !important;
 }
 
 .exp-root.fx-blackhole .exp-cell[data-color="yellow"].is-playable{
-    fill:rgba(255,221,14,.32) !important;
+    fill:rgba(255,221,14,.28) !important;
     stroke:rgba(255,221,14,.82) !important;
 }
 
-/* Casillas no jugables casi apagadas */
-.exp-root.fx-blackhole .exp-cell.is-filler{
-    opacity:.08;
-    fill:transparent !important;
-    stroke:rgba(255,255,255,.12) !important;
+/* Caminos locales del Agujero */
+.exp-blackhole-guide{
+    pointer-events:none;
+
+    stroke:rgba(255,255,255,.62);
+    stroke-width:4.6;
+    stroke-linecap:round;
+
+    opacity:0;
+
+    filter:
+        drop-shadow(0 0 8px rgba(255,255,255,.24))
+        drop-shadow(0 0 12px rgba(214,36,22,.16));
+
+    transition:
+        opacity .32s ease,
+        stroke-width .32s ease,
+        filter .32s ease;
 }
 
-/* Casilla actual y disponibles */
+.exp-blackhole-guide.is-visible{
+    opacity:.82;
+    stroke-width:5.8;
+
+    filter:
+        drop-shadow(0 0 10px rgba(255,255,255,.32))
+        drop-shadow(0 0 14px rgba(214,36,22,.22));
+}
+
+/* Rastro del usuario */
+.exp-root.fx-blackhole .exp-trail{
+    opacity:.88;
+    stroke-width:18;
+
+    filter:
+        drop-shadow(0 0 12px rgba(255,255,255,.24))
+        drop-shadow(0 0 18px rgba(214,36,22,.22));
+}
+
+/* Actual y disponibles */
 .exp-root.fx-blackhole .exp-cell.is-current{
     opacity:1;
     stroke:var(--exp-player-color) !important;
@@ -1628,24 +2163,14 @@ body{
 .exp-root.fx-blackhole .exp-cell.is-available{
     opacity:1;
     stroke:#ffffff !important;
-    stroke-width:7.5;
+    stroke-width:8;
 
     filter:
         drop-shadow(0 0 12px rgba(255,255,255,.72))
         drop-shadow(0 8px 16px rgba(0,0,0,.34));
 }
 
-/* Rastro del usuario más visible sobre negro */
-.exp-root.fx-blackhole .exp-trail{
-    opacity:.9;
-    stroke-width:18;
-
-    filter:
-        drop-shadow(0 0 12px rgba(255,255,255,.28))
-        drop-shadow(0 0 18px rgba(214,36,22,.24));
-}
-
-/* El personaje se mantiene estable */
+/* Personaje estable */
 .exp-root.fx-blackhole .exp-player{
     animation:none;
     transform:none;
@@ -1655,21 +2180,88 @@ body{
         drop-shadow(0 0 18px rgba(255,255,255,.72));
 }
 
-/* Nuevos caminos locales: no mandala, solo posibilidad inmediata */
-.exp-blackhole-guide{
-    pointer-events:none;
+@keyframes expBlackholeZRing{
+    0%, 100%{
+        transform:scale(var(--z-far-scale, .88));
+        opacity:.48;
 
-    stroke:rgba(255,255,255,.72);
-    stroke-width:6;
-    stroke-linecap:round;
+        filter:
+            drop-shadow(0 1px 4px rgba(0,0,0,.34));
+    }
 
-    opacity:.82;
+    22%{
+        transform:scale(var(--z-near-scale, 1.22));
+        opacity:1;
 
-    filter:
-        drop-shadow(0 0 9px rgba(255,255,255,.38));
+        filter:
+            drop-shadow(0 0 20px rgba(255,255,255,.28))
+            drop-shadow(0 20px 34px rgba(0,0,0,.48));
+    }
 
-    animation:expBlackholeGuidePulse 1.8s ease-in-out infinite;
-    animation-delay:var(--guide-delay, 0s);
+    34%{
+        transform:scale(1.02);
+        opacity:.82;
+
+        filter:
+            drop-shadow(0 8px 15px rgba(0,0,0,.36));
+    }
+
+    72%{
+        transform:scale(var(--z-far-scale, .88));
+        opacity:.52;
+
+        filter:
+            drop-shadow(0 1px 4px rgba(0,0,0,.32));
+    }
+}
+
+@keyframes expBlackholeZRingSoft{
+    0%, 100%{
+        transform:scale(.92);
+        opacity:.04;
+    }
+
+    28%{
+        transform:scale(1.04);
+        opacity:.13;
+    }
+
+    58%{
+        transform:scale(.96);
+        opacity:.07;
+    }
+}
+
+@keyframes expBlackholeZRingFiller{
+    0%,100%{
+        transform:scale(var(--z-far-scale, .92));
+        opacity:.08;
+
+        filter:
+            drop-shadow(0 1px 3px rgba(0,0,0,.24));
+    }
+
+    24%{
+        transform:scale(var(--z-near-scale, 1.08));
+        opacity:.24;
+
+        filter:
+            drop-shadow(0 0 10px rgba(255,255,255,.12))
+            drop-shadow(0 8px 16px rgba(0,0,0,.34));
+    }
+
+    52%{
+        transform:scale(.98);
+        opacity:.14;
+
+        filter:
+            drop-shadow(0 3px 8px rgba(0,0,0,.28));
+    }
+
+    78%{
+        transform:scale(var(--z-far-scale, .92));
+        opacity:.10;
+    }
 }
 
 /* ================================= */
@@ -1678,17 +2270,20 @@ body{
 
 .exp-progress-status{
     position:absolute;
-    left:30px;
-    top:26px;
-    z-index:30;
+    right:28px;
+    bottom:342px;
+    left:auto;
+    top:auto;
 
-    width:230px;
+    z-index:36;
 
-    padding:13px 15px 14px;
+    width:360px;
 
-    border-radius:18px;
+    padding:14px 16px 15px;
 
-    background:rgba(255,221,14,.78);
+    border-radius:20px;
+
+    background:rgba(255,221,14,.82);
 
     box-shadow:
         0 12px 34px rgba(0,0,0,.10),
@@ -1699,7 +2294,11 @@ body{
 }
 
 .exp-progress-status span{
-    display:block;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex-wrap:nowrap;
+    white-space:nowrap;
 
     margin-bottom:9px;
 
@@ -1708,13 +2307,95 @@ body{
     font-size:.82rem;
     font-weight:700;
     letter-spacing:.01em;
+}
 
-    animation:expGoalPulse 1.8s ease-in-out infinite;
+.exp-progress-text{
+    opacity:.78;
+    margin-right:2px;
+    animation:expGoalPulse 2.4s ease-in-out infinite;
+}
+
+.exp-progress-cells{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:nowrap;
+}
+
+.exp-progress-plus{
+    color:#333;
+    font-size:.72rem;
+    font-weight:800;
+    opacity:.65;
+}
+
+.exp-progress-cell{
+    position:relative;
+
+    width:20px;
+    height:20px;
+
+    display:inline-block;
+    flex:0 0 auto;
+
+    vertical-align:middle;
+}
+
+.exp-progress-cell::before{
+    content:"";
+    position:absolute;
+    inset:0;
+
+    clip-path:polygon(
+        30% 0%,
+        70% 0%,
+        100% 30%,
+        100% 70%,
+        70% 100%,
+        30% 100%,
+        0% 70%,
+        0% 30%
+    );
+
+    background:currentColor;
+
+    filter:
+        drop-shadow(0 0 0 rgba(236,236,236,.75))
+        drop-shadow(0 4px 8px rgba(0,0,0,.10));
+}
+
+.exp-progress-cell::after{
+    content:"";
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    width:7px;
+    height:7px;
+
+    border-radius:50%;
+
+    background:rgba(236,236,236,.78);
+
+    transform:translate(-50%, -50%);
+}
+
+.exp-progress-cell--blue{
+    color:var(--blue);
+}
+
+.exp-progress-cell--green{
+    color:var(--green);
+}
+
+.exp-progress-cell--red{
+    color:var(--red);
 }
 
 .exp-progress-track{
     width:100%;
-    height:9px;
+    height:10px;
 
     border-radius:999px;
 
@@ -1736,9 +2417,526 @@ body{
     transition:width .45s ease;
 }
 
+
+/* ================================= */
+/* CIERRE DE EXPERIENCIA */
+/* ================================= */
+
+.exp-ending{
+    position:absolute;
+    inset:0;
+    z-index:95;
+
+    display:grid;
+    place-items:center;
+
+    overflow:hidden;
+
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+
+    background:transparent;
+
+    transition:
+        opacity .35s ease,
+        visibility .35s ease,
+        background .85s ease;
+}
+
+.exp-ending.is-ending-active{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+}
+
+.exp-ending.is-ending-revealed{
+    background:
+        radial-gradient(circle at 88% 82%, rgba(255,221,14,.34), transparent 24%),
+        radial-gradient(circle at 76% 66%, rgba(255,230,118,.30), transparent 30%),
+        radial-gradient(circle at 18% 18%, rgba(255,247,197,.22), transparent 22%),
+        linear-gradient(180deg, #F7EDB7 0%, #F1DB61 100%);
+}
+
+.exp-ending-wave{
+    position:absolute;
+    right:-18vmax;
+    bottom:-14vmax;
+    z-index:1;
+
+    width:110vmax;
+    height:110vmax;
+
+    border-radius:48% 38% 56% 44%;
+
+    background:
+        radial-gradient(circle at 32% 30%, rgba(255,255,255,.22), transparent 22%),
+        radial-gradient(circle at 54% 42%, rgba(255,235,118,.96), transparent 30%),
+        radial-gradient(circle at 68% 60%, rgba(255,208,38,.82), transparent 34%),
+        linear-gradient(145deg, #FFEA59, #F3BE22);
+
+    opacity:0;
+
+    transform:
+        translate(22%, 18%)
+        rotate(10deg)
+        scale(.08);
+}
+
+.exp-ending-wave::before,
+.exp-ending-wave::after{
+    content:"";
+    position:absolute;
+
+    border-radius:44% 56% 36% 64%;
+
+    background:
+        radial-gradient(circle at 32% 42%, rgba(255,255,255,.22), transparent 20%),
+        radial-gradient(circle at 68% 52%, rgba(255,255,255,.14), transparent 28%),
+        linear-gradient(140deg, rgba(255,239,134,.74), rgba(255,210,52,.48));
+
+    animation:expEndingWaterDrift 5.8s ease-in-out infinite;
+}
+
+.exp-ending-wave::before{
+    inset:-10% -6% -14% -12%;
+    transform:rotate(-8deg);
+}
+
+.exp-ending-wave::after{
+    inset:-18% -16% -8% -10%;
+    opacity:.56;
+    transform:rotate(10deg);
+    animation-duration:7.2s;
+    animation-direction:reverse;
+}
+
+.exp-ending.is-ending-active .exp-ending-wave{
+    animation:expEndingFlood 1.85s cubic-bezier(.74,0,.18,1) forwards;
+}
+
+.exp-ending-content{
+    position:relative;
+    z-index:2;
+
+    width:min(var(--ending-total-width), calc(100vw - 56px));
+    min-height:min(720px, calc(100dvh - 72px));
+
+    display:grid;
+    grid-template-columns:minmax(0, var(--ending-card-width)) var(--ending-side-width);
+    column-gap:var(--ending-gap);
+    align-items:center;
+    justify-content:center;
+
+    opacity:0;
+    transform:none;
+
+    transition:
+        opacity .72s ease;
+}
+
+.exp-ending.is-ending-revealed .exp-ending-content{
+    opacity:1;
+    transform:none;
+}
+
+.exp-ending-card{
+    width:100%;
+    min-height:clamp(540px, 70dvh, 640px);
+
+    grid-column:1;
+
+    display:grid;
+    grid-template-columns:minmax(390px, .96fr) minmax(360px, 1.04fr);
+    align-items:center;
+    gap:clamp(24px, 3vw, 44px);
+
+    padding:clamp(28px, 4vw, 52px);
+
+    border-radius:34px;
+
+    background:rgba(255,252,244,.94);
+
+    box-shadow:
+        0 28px 90px rgba(0,0,0,.16),
+        inset 0 0 0 1px rgba(255,255,255,.82);
+
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+}
+
+.exp-ending-kicker{
+    margin:0 0 12px;
+
+    color:#C09A13;
+
+    font-size:.76rem;
+    font-weight:800;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+}
+
+.exp-ending-title{
+    margin:0;
+
+    color:#222;
+
+    font-size:clamp(2.15rem, 3.75vw, 4.25rem);
+    line-height:.92;
+    font-weight:800;
+    letter-spacing:-.045em;
+
+    max-width:none;
+
+    overflow-wrap:normal;
+    word-break:normal;
+    hyphens:none;
+}
+
+.exp-ending-title span{
+    display:block;
+    white-space:nowrap;
+}
+
+.exp-ending-text{
+    max-width:30ch;
+    margin:22px 0 0;
+
+    color:rgba(35,35,35,.66);
+
+    font-size:clamp(.98rem, 1.35vw, 1.12rem);
+    line-height:1.55;
+    font-weight:400;
+}
+
+.exp-ending-info{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.exp-ending-qr{
+    margin-top:26px;
+
+    display:flex;
+    align-items:flex-end;
+    gap:14px;
+
+    max-width:360px;
+}
+
+.exp-ending-qr-box{
+    width:116px;
+    height:116px;
+
+    flex:0 0 auto;
+
+    display:grid;
+    place-items:center;
+
+    padding:7px;
+
+    background:#fff;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,.08),
+        0 10px 22px rgba(0,0,0,.08);
+}
+
+.exp-ending-qr-box canvas{
+    width:100% !important;
+    height:100% !important;
+    display:block;
+}
+
+.exp-ending-qr-box span{
+    color:rgba(35,35,35,.34);
+
+    font-size:.8rem;
+    font-weight:800;
+}
+
+.exp-ending-qr p{
+    margin:0 0 4px;
+
+    color:#222;
+
+    font-size:.72rem;
+    font-weight:700;
+    line-height:1.25;
+}
+
+.exp-ending-info{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.exp-ending-qr{
+    margin-top:26px;
+
+    display:flex;
+    align-items:flex-end;
+    gap:14px;
+
+    max-width:360px;
+}
+
+.exp-ending-qr-box{
+    width:190px;
+    height:190px;
+
+    flex:0 0 auto;
+
+    display:grid;
+    place-items:center;
+
+    padding:7px;
+
+    background:#fff;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,.08),
+        0 10px 22px rgba(0,0,0,.08);
+}
+
+.exp-ending-qr-box canvas{
+    width:100% !important;
+    height:100% !important;
+    display:block;
+}
+
+.exp-ending-qr-box span{
+    color:rgba(35,35,35,.34);
+
+    font-size:.8rem;
+    font-weight:800;
+}
+
+.exp-ending-qr p{
+    margin:0 0 4px;
+
+    color:#222;
+
+    font-size:.72rem;
+    font-weight:700;
+    line-height:1.25;
+}
+
+.exp-ending-map{
+    aspect-ratio:1 / 1;
+    min-height:330px;
+
+    border-radius:28px;
+
+    overflow:hidden;
+
+    background:
+        radial-gradient(circle at 50% 50%, rgba(255,221,14,.13), transparent 46%),
+        linear-gradient(135deg, #F8F6EF, #FFFFFF);
+
+    box-shadow:
+        inset 0 0 0 1px rgba(30,30,30,.08),
+        inset 0 24px 80px rgba(255,221,14,.10);
+}
+
+.exp-ending-svg{
+    width:100%;
+    height:100%;
+    display:block;
+}
+
+.exp-ending-route{
+    fill:none;
+
+    stroke-linecap:round;
+    stroke-linejoin:round;
+
+    opacity:.76;
+
+    animation:expEndingDrawRoute .76s ease forwards;
+}
+
+.exp-ending-route--ghost{
+    opacity:.13;
+}
+
+.exp-ending-point{
+    opacity:0;
+
+    transform-box:fill-box;
+    transform-origin:center;
+
+    animation:expEndingPointIn .38s ease forwards;
+}
+
+.exp-ending-point-core{
+    fill:white;
+    stroke-width:5;
+}
+
+.exp-ending-point--start,
+.exp-ending-point--end{
+    stroke-width:7;
+}
+
+.exp-ending-actions{
+    position:fixed;
+    top:var(--ending-actions-top);
+    left:var(--ending-side-left);
+    right:auto;
+    z-index:111;
+
+    width:var(--ending-side-width);
+
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+
+    transform:none;
+}
+
+.exp-ending-button{
+    appearance:none;
+
+    border:none;
+    border-radius:999px;
+
+    padding:14px 20px;
+
+    font:inherit;
+    font-weight:800;
+    line-height:1;
+
+    text-decoration:none;
+    cursor:pointer;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease,
+        background-color .22s ease;
+}
+
+.exp-ending-button:hover{
+    transform:translateY(-2px);
+}
+
+.exp-ending-button--reset{
+    background:#222;
+    color:white;
+
+    box-shadow:0 12px 28px rgba(0,0,0,.18);
+}
+
+.exp-ending-button--back{
+    background:var(--yellow);
+    color:#222;
+
+    box-shadow:0 12px 28px rgba(255,221,14,.28);
+}
+
+.exp-root.is-ending-locked .exp-board-svg,
+.exp-root.is-ending-locked .exp-cell{
+    pointer-events:none;
+}
+
+.exp-root.is-ending-locked .exp-board-actions,
+.exp-root.is-ending-locked .exp-progress-status,
+.exp-root.is-ending-locked .exp-final-overlay{
+    opacity:0;
+    pointer-events:none;
+}
+
+@keyframes expEndingFlood{
+    0%{
+        opacity:0;
+        transform:
+            translate(24%, 18%)
+            rotate(10deg)
+            scale(.08);
+    }
+
+    12%{
+        opacity:1;
+    }
+
+    44%{
+        opacity:1;
+        transform:
+            translate(6%, 6%)
+            rotate(7deg)
+            scale(.85);
+    }
+
+    72%{
+        opacity:1;
+        transform:
+            translate(-12%, -10%)
+            rotate(5deg)
+            scale(1.35);
+    }
+
+    100%{
+        opacity:.94;
+        transform:
+            translate(-44%, -36%)
+            rotate(2deg)
+            scale(2.15);
+    }
+}
+
+@keyframes expEndingWaterDrift{
+    0%,100%{
+        transform:rotate(0deg) scale(1);
+    }
+
+    50%{
+        transform:rotate(8deg) scale(1.05);
+    }
+}
+
+@keyframes expEndingDrawRoute{
+    to{
+        stroke-dashoffset:0;
+    }
+}
+
+@keyframes expEndingPointIn{
+    0%{
+        opacity:0;
+        transform:scale(.2);
+    }
+
+    100%{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+
 /* ================================= */
 /* RESPONSIVE FINAL */
 /* ================================= */
+
+@media (max-width:1280px){
+    .exp-root{
+        --ending-card-width:clamp(760px, 58vw, 880px);
+        --ending-side-width:300px;
+        --ending-gap:36px;
+    }
+
+    .exp-ending-card{
+        grid-template-columns:minmax(340px, .95fr) minmax(320px, 1.05fr);
+    }
+
+    .exp-ending-title{
+        font-size:clamp(2rem, 4.2vw, 3.55rem);
+    }
+}
 
 @media (max-width:768px){
     .exp-entry-center{
@@ -1746,9 +2944,12 @@ body{
     }
 
     .exp-progress-status{
-        left:18px;
-        top:18px;
-        width:205px;
+        right:16px;
+        bottom:285px;
+        left:auto;
+        top:auto;
+
+        width:245px;
     }
 
     .exp-board-actions{
@@ -1762,15 +2963,6 @@ body{
         right:16px;
         bottom:16px;
         width:215px;
-    }
-
-    .exp-level-picker{
-        flex-direction:column;
-        gap:9px;
-    }
-
-    .exp-level{
-        width:220px;
     }
 
     .exp-combo-panel{
@@ -1788,8 +2980,81 @@ body{
     }
 
     .exp-final-overlay{
-    right:16px;
-    bottom:330px;
-    width:245px;
+        right:16px;
+        bottom:385px;
+        width:245px;
+    }
+
+    .exp-ending-content{
+        width:calc(100vw - 22px);
+        min-height:auto;
+    }
+
+    .exp-ending-card{
+        width:100%;
+        min-height:auto;
+
+        grid-template-columns:1fr;
+        gap:20px;
+
+        padding:22px;
+        border-radius:26px;
+    }
+
+    .exp-ending-title{
+        max-width:100%;
+        font-size:clamp(2rem, 10vw, 3.6rem);
+    }
+
+    .exp-ending-map{
+        min-height:240px;
+    }
+
+    .exp-ending-actions{
+        position:static;
+        width:100%;
+        margin-top:16px;
+
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+    }
+
+    .exp-ending-button{
+        padding:12px 18px;
+        font-size:.9rem;
+    }
+
+    .exp-combo-panel.is-ending-centered{
+        top:18px;
+        left:12px;
+        right:auto;
+        bottom:auto;
+
+        width:calc(100vw - 24px);
+        padding:14px;
+
+        transform:none;
+    }
+
+    .exp-combo-panel.is-ending-centered .exp-combo-title{
+        margin-bottom:2px;
+    }
+
+    .exp-ending-qr{
+        width:100%;
+        margin-top:20px;
+
+        justify-content:flex-start;
+        gap:12px;
+    }
+
+    .exp-ending-qr-box{
+        width:160px;
+        height:160px;
+    }
+
+    .exp-ending-qr p{
+        font-size:.68rem;
     }
 }

@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lectura de recorridos</title>
+<style>
+    :root{
+        --bg:#f4d61f;
+        --paper:#ece8dc;
+        --ink:#1f2025;
+        --muted:#66625b;
+        --line:#f59a23;
+
+        --blue:#20a8e0;
+        --red:#ef4b43;
+        --green:#8fbe4a;
+        --yellow:#f2d51d;
+        --violet:#7858ff;
+    }
+
+    *{
+        box-sizing:border-box;
+    }
+
+    html, body{
+        margin:0;
+        padding:0;
+        min-height:100%;
+        font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:var(--bg);
+        color:var(--ink);
+    }
+
+    body{
+        display:flex;
+        justify-content:center;
+        padding:18px 14px 24px;
+    }
+
+    .result-page{
+        width:min(100%, 430px);
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:18px;
+    }
+
+    .result-header{
+        width:100%;
+        display:grid;
+        grid-template-columns:52px 1fr 52px;
+        align-items:center;
+        gap:12px;
+        padding-top:4px;
+    }
+
+    .result-badge{
+        width:52px;
+        height:52px;
+        border-radius:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .result-badge svg{
+        width:100%;
+        height:100%;
+        display:block;
+    }
+
+    .result-title{
+        margin:0;
+        text-align:center;
+        font-weight:900;
+        font-size:clamp(2.25rem, 7vw, 3.3rem);
+        line-height:.9;
+        letter-spacing:-.04em;
+    }
+
+    .result-bar{
+        width:100%;
+        display:grid;
+        grid-template-columns:repeat(10, 1fr);
+        gap:4px;
+    }
+
+    .result-cell-chip{
+        aspect-ratio:1/1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:transparent;
+    }
+
+    .result-cell-chip svg{
+        width:100%;
+        height:100%;
+        display:block;
+    }
+
+    .result-card{
+        width:100%;
+        background:var(--paper);
+        border-radius:38px;
+        padding:28px 22px;
+        box-shadow:0 14px 36px rgba(0,0,0,.12);
+    }
+
+    .result-visual{
+        width:100%;
+        aspect-ratio:1/1;
+        border-radius:28px;
+        background:rgba(255,255,255,.22);
+        border:1px solid rgba(0,0,0,.06);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        overflow:hidden;
+    }
+
+    .result-visual svg{
+        width:88%;
+        height:88%;
+        display:block;
+    }
+
+    .result-caption{
+        width:100%;
+        background:var(--paper);
+        border-radius:24px;
+        padding:18px 22px;
+        color:#4a4a4a;
+        text-align:center;
+        font-size:1rem;
+        line-height:1.45;
+        box-shadow:0 12px 28px rgba(0,0,0,.08);
+    }
+
+    .result-footer{
+        width:100%;
+        text-align:center;
+        color:#2e2e2e;
+        font-size:.72rem;
+        line-height:1.35;
+        font-weight:700;
+        text-transform:uppercase;
+    }
+
+    .result-footer small{
+        display:block;
+        margin-top:6px;
+        font-size:.65rem;
+        font-weight:600;
+        line-height:1.35;
+    }
+
+    .result-export-panel{
+        width:min(100%, 430px);
+
+        display:none;
+        flex-direction:column;
+        align-items:center;
+        gap:14px;
+
+        padding:0 0 18px;
+    }
+
+    body.is-image-ready .result-page{
+        display:none;
+    }
+
+    body.is-image-ready .result-export-panel{
+        display:flex;
+    }
+
+    .result-export-note{
+        width:100%;
+
+        margin:0;
+
+        color:#222;
+
+        font-size:.92rem;
+        font-weight:800;
+        line-height:1.35;
+        text-align:center;
+    }
+
+    .result-export-image{
+        width:100%;
+        height:auto;
+
+        display:block;
+
+        border-radius:26px;
+
+        box-shadow:
+            0 18px 46px rgba(0,0,0,.18);
+    }
+
+    .result-save-button{
+        width:100%;
+
+        display:block;
+
+        padding:14px 18px;
+        border-radius:999px;
+
+        background:#1f2025;
+        color:#fff;
+
+        text-align:center;
+        text-decoration:none;
+
+        font-size:1rem;
+        font-weight:900;
+    }
+
+    .empty-note{
+        font-size:.95rem;
+        fill:#6d6d6d;
+    }
+</style>
+</head>
+<body>
+    <main class="result-page">
+
+        <header class="result-header">
+            <div class="result-badge" aria-hidden="true">
+                <svg viewBox="0 0 64 64">
+                    <polygon points="32,4 41,13 53,11 55,23 64,32 55,41 53,53 41,51 32,60 23,51 11,53 9,41 0,32 9,23 11,11 23,13"
+                             fill="#f2d51d"/>
+                    <polygon points="32,11 38,17 47,16 48,25 54,32 48,39 47,48 38,47 32,53 26,47 17,48 16,39 10,32 16,25 17,16 26,17"
+                             fill="none" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="32" cy="32" r="10" fill="#dcd9cf" stroke="#ffffff" stroke-width="3"/>
+                </svg>
+            </div>
+
+            <h1 class="result-title">Lectura<br>de recorridos</h1>
+
+            <div class="result-badge" aria-hidden="true">
+                <svg viewBox="0 0 64 64">
+                    <polygon points="32,4 41,13 53,11 55,23 64,32 55,41 53,53 41,51 32,60 23,51 11,53 9,41 0,32 9,23 11,11 23,13"
+                             fill="#f2d51d"/>
+                    <polygon points="32,11 38,17 47,16 48,25 54,32 48,39 47,48 38,47 32,53 26,47 17,48 16,39 10,32 16,25 17,16 26,17"
+                             fill="none" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="32" cy="32" r="10" fill="#dcd9cf" stroke="#ffffff" stroke-width="3"/>
+                </svg>
+            </div>
+        </header>
+
+        <section class="result-bar" id="resultBarTop" aria-hidden="true"></section>
+
+        <section class="result-card">
+            <div class="result-visual">
+                <svg id="resultSvg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
+                    <g id="resultLines"></g>
+                    <g id="resultPoints"></g>
+                    <text x="500" y="500" text-anchor="middle" class="empty-note">
+                        Sin recorrido disponible
+                    </text>
+                </svg>
+            </div>
+        </section>
+
+        <section class="result-caption">
+            Los puntos marcan las casillas donde el recorrido comienza o termina; las líneas reúnen los caminos seguidos durante la lectura del tablero.
+        </section>
+
+        <section class="result-bar" id="resultBarBottom" aria-hidden="true"></section>
+
+        <footer class="result-footer">
+            Interfaz digital - Juego “Enrútate”
+            <small>
+                Taller de diseño de interacción 2026<br>
+                Escuela de Arquitectura y Diseño<br>
+                Pontificia Universidad Católica de Valparaíso
+            </small>
+        </footer>
+
+    </main>
+
+<section class="result-export-panel" id="resultExportPanel" hidden>
+
+    <p class="result-export-note">
+        Mantén presionada la imagen para guardarla en tu teléfono.
+    </p>
+
+    <img 
+        class="result-export-image" 
+        id="resultExportImage" 
+        alt="Imagen del recorrido generado"
+    >
+
+    <a 
+        class="result-save-button" 
+        id="resultSaveButton" 
+        download="lectura-de-recorridos.png"
+    >
+        Guardar imagen
+    </a>
+
+</section>
+
+<script>
+(function(){
+
+    const BAR_PATTERN = ['red','green','blue','red','green','blue','red','green','blue','red'];
+
+    const COLOR_MAP = {
+        red:   { fill:'#ef4b43', stroke:'#a11f1a' },
+        green: { fill:'#8fbe4a', stroke:'#5d8d1f' },
+        blue:  { fill:'#20a8e0', stroke:'#0f6f95' },
+        yellow:{ fill:'#f2d51d', stroke:'#b99605' }
+    };
+
+    const RESULT_COLOR_MAP = {
+        v:'#7C4DFF',
+        p:'#FF4FA3',
+        o:'#FF8A00',
+        c:'#2EC8D3'
+    };
+
+    const barTop = document.getElementById('resultBarTop');
+    const barBottom = document.getElementById('resultBarBottom');
+    const svg = document.getElementById('resultSvg');
+    const linesLayer = document.getElementById('resultLines');
+    const pointsLayer = document.getElementById('resultPoints');
+
+    const exportPanel = document.getElementById('resultExportPanel');
+    const exportImage = document.getElementById('resultExportImage');
+    const saveButton = document.getElementById('resultSaveButton');
+
+    function createCellChip(color){
+        const wrap = document.createElement('div');
+        wrap.className = 'result-cell-chip';
+
+        const colors = COLOR_MAP[color] || COLOR_MAP.blue;
+
+        wrap.innerHTML = `
+            <svg viewBox="0 0 60 60" aria-hidden="true">
+                <polygon
+                    points="30,6 43,11 54,22 54,38 43,49 30,54 17,49 6,38 6,22 17,11"
+                    fill="${colors.fill}"
+                    stroke="${colors.stroke}"
+                    stroke-width="3"
+                ></polygon>
+                <circle cx="30" cy="30" r="8.5" fill="#1f2025"></circle>
+            </svg>
+        `;
+        return wrap;
+    }
+
+    function drawRoundedRect(ctx, x, y, w, h, r){
+
+        ctx.beginPath();
+
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+
+        ctx.closePath();
+        ctx.fill();
+
+    }
+
+    function drawMultilineText(ctx, text, x, y, maxWidth, lineHeight){
+
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
+
+        words.forEach((word, index) => {
+
+            const testLine = line ? `${line} ${word}` : word;
+            const testWidth = ctx.measureText(testLine).width;
+
+            if(testWidth > maxWidth && line){
+                ctx.fillText(line, x, currentY);
+                line = word;
+                currentY += lineHeight;
+            }else{
+                line = testLine;
+            }
+
+            if(index === words.length - 1 && line){
+                ctx.fillText(line, x, currentY);
+            }
+
+        });
+
+        return currentY;
+
+    }
+
+    function drawOctagon(ctx, cx, cy, r, fill, stroke){
+
+        ctx.beginPath();
+
+        for(let i = 0; i < 8; i++){
+
+            const angle = Math.PI / 8 + i * Math.PI / 4;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+
+            if(i === 0){
+                ctx.moveTo(x, y);
+            }else{
+                ctx.lineTo(x, y);
+            }
+
+        }
+
+        ctx.closePath();
+
+        ctx.fillStyle = fill;
+        ctx.fill();
+
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = stroke;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * .36, 0, Math.PI * 2);
+        ctx.fillStyle = '#1f2025';
+        ctx.fill();
+
+    }
+
+    function drawCellBar(ctx, x, y, w){
+
+        const pattern = BAR_PATTERN;
+        const gap = 8;
+        const size = (w - gap * (pattern.length - 1)) / pattern.length;
+
+        pattern.forEach((color, index) => {
+
+            const colors = COLOR_MAP[color] || COLOR_MAP.blue;
+            const cx = x + index * (size + gap) + size / 2;
+            const cy = y + size / 2;
+
+            drawOctagon(ctx, cx, cy, size * .43, colors.fill, colors.stroke);
+
+        });
+
+    }
+
+    function drawResultRoute(ctx, data, x, y, w, h){
+
+        ctx.save();
+
+        ctx.translate(x, y);
+
+        ctx.fillStyle = 'rgba(255,255,255,.22)';
+        drawRoundedRect(ctx, 0, 0, w, h, 36);
+
+        const strokeColor = data && data.c ? data.c : '#FF8A00';
+        const points = data && Array.isArray(data.p) ? data.p : [];
+
+        if(points.length > 1){
+
+            ctx.save();
+
+            const innerX = w * .08;
+            const innerY = h * .08;
+            const innerW = w * .84;
+            const innerH = h * .84;
+
+            ctx.translate(innerX, innerY);
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            for(let i = 0; i < points.length - 1; i++){
+
+                const a = points[i];
+                const b = points[i + 1];
+
+                const x1 = (a.x / 1000) * innerW;
+                const y1 = (a.y / 1000) * innerH;
+                const x2 = (b.x / 1000) * innerW;
+                const y2 = (b.y / 1000) * innerH;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+
+                ctx.strokeStyle = strokeColor;
+                ctx.globalAlpha = .18;
+                ctx.lineWidth = 14;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+
+                ctx.globalAlpha = .92;
+                ctx.lineWidth = 5;
+                ctx.stroke();
+
+            }
+
+            points.forEach(point => {
+
+                const px = (point.x / 1000) * innerW;
+                const py = (point.y / 1000) * innerH;
+
+                ctx.beginPath();
+                ctx.arc(px, py, 7, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = 1;
+                ctx.fill();
+
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = strokeColor;
+                ctx.stroke();
+
+            });
+
+            ctx.restore();
+
+        }else{
+
+            ctx.fillStyle = '#66625b';
+            ctx.font = '700 24px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Sin recorrido disponible', w / 2, h / 2);
+
+        }
+
+        ctx.restore();
+
+    }
+
+    function generateResultPng(data){
+
+    if(!exportImage || !saveButton || !exportPanel) return;
+    if(!data) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const W = 860;
+    const H = 1600;
+
+    canvas.width = W;
+    canvas.height = H;
+
+    ctx.fillStyle = '#f4d61f';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1f2025';
+    ctx.font = '900 82px system-ui, sans-serif';
+    ctx.fillText('Lectura', W / 2, 120);
+    ctx.fillText('de recorridos', W / 2, 202);
+
+    drawCellBar(ctx, 28, 252, W - 56);
+
+    ctx.fillStyle = '#ece8dc';
+    drawRoundedRect(ctx, 54, 350, W - 108, 590, 72);
+
+    drawResultRoute(ctx, data, 108, 410, W - 216, 470);
+
+    ctx.fillStyle = '#ece8dc';
+    drawRoundedRect(ctx, 94, 980, W - 188, 220, 42);
+
+    ctx.fillStyle = '#1f2025';
+    ctx.textAlign = 'center';
+    ctx.font = '700 30px system-ui, sans-serif';
+
+    drawMultilineText(
+        ctx,
+        'Los puntos marcan las casillas donde el recorrido comienza o termina; las líneas reúnen los caminos seguidos durante la lectura del tablero.',
+        W / 2,
+        1050,
+        W - 270,
+        38
+    );
+
+    drawCellBar(ctx, 28, 1260, W - 56);
+
+    ctx.fillStyle = '#1f2025';
+    ctx.font = '900 22px system-ui, sans-serif';
+    ctx.fillText('INTERFAZ DIGITAL - JUEGO “ENRÚTATE”', W / 2, 1395);
+
+    ctx.font = '700 17px system-ui, sans-serif';
+    ctx.fillText('TALLER DE DISEÑO DE INTERACCIÓN 2026', W / 2, 1440);
+    ctx.fillText('ESCUELA DE ARQUITECTURA Y DISEÑO', W / 2, 1466);
+    ctx.fillText('PONTIFICIA UNIVERSIDAD CATÓLICA DE VALPARAÍSO', W / 2, 1492);
+
+    const imageData = canvas.toDataURL('image/png');
+
+    exportImage.src = imageData;
+    saveButton.href = imageData;
+
+    exportPanel.hidden = false;
+    document.body.classList.add('is-image-ready');
+
+}
+    
+    function fillBars(){
+        BAR_PATTERN.forEach(color => {
+            barTop.appendChild(createCellChip(color));
+            barBottom.appendChild(createCellChip(color));
+        });
+    }
+
+    function decodePointValue(value){
+
+        return parseInt(value, 36);
+
+    }
+
+    function decodeResultPoints(encodedPoints){
+
+        const points = [];
+
+        for(let i = 0; i < encodedPoints.length; i += 4){
+
+            const x = decodePointValue(encodedPoints.slice(i, i + 2));
+            const y = decodePointValue(encodedPoints.slice(i + 2, i + 4));
+
+            if(Number.isNaN(x) || Number.isNaN(y)) continue;
+
+            points.push({ x, y });
+
+        }
+
+        return points;
+
+    }
+
+    function decodeCompactResult(value){
+
+        const parts = value.split('.');
+        const colorKey = parts[0] || 'o';
+        const encodedPoints = parts[1] || '';
+
+        return {
+            c:RESULT_COLOR_MAP[colorKey] || '#FF8A00',
+            p:decodeResultPoints(encodedPoints)
+        };
+
+    }
+
+    function getHashData(){
+
+        const raw = location.hash.replace(/^#/, '');
+
+        if(!raw) return null;
+
+        const params = new URLSearchParams(raw);
+
+        const compactData = params.get('r');
+
+        if(compactData){
+            return decodeCompactResult(compactData);
+        }
+
+        const encoded = params.get('data');
+
+        if(!encoded) return null;
+
+        try{
+            const json = decodeURIComponent(
+                escape(
+                    atob(encoded)
+                )
+            );
+
+            return JSON.parse(json);
+
+        }catch(error){
+            console.warn('No se pudo leer el recorrido:', error);
+            return null;
+        }
+
+    }
+
+    function clearEmptyMessage(){
+        const txt = svg.querySelector('.empty-note');
+        if(txt) txt.remove();
+    }
+
+    function renderRoute(data){
+
+        if(!data) return;
+
+        clearEmptyMessage();
+        linesLayer.innerHTML = '';
+        pointsLayer.innerHTML = '';
+
+        const strokeColor = data.c || data.stroke || '#f59a23';
+
+        const points = Array.isArray(data.p)
+            ? data.p
+            : [];
+
+        const segments = Array.isArray(data.s)
+            ? data.s.map(segment => ({
+                x1:segment[0],
+                y1:segment[1],
+                x2:segment[2],
+                y2:segment[3]
+            }))
+            : points.slice(0, -1).map((point, index) => {
+
+                const nextPoint = points[index + 1];
+
+                return {
+                    x1:point.x,
+                    y1:point.y,
+                    x2:nextPoint.x,
+                    y2:nextPoint.y
+                };
+
+            });
+
+        segments.forEach(segment => {
+
+            const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            ghost.setAttribute('x1', segment.x1);
+            ghost.setAttribute('y1', segment.y1);
+            ghost.setAttribute('x2', segment.x2);
+            ghost.setAttribute('y2', segment.y2);
+            ghost.setAttribute('stroke', strokeColor);
+            ghost.setAttribute('stroke-width', '14');
+            ghost.setAttribute('stroke-linecap', 'round');
+            ghost.setAttribute('opacity', '.13');
+
+            linesLayer.appendChild(ghost);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', segment.x1);
+            line.setAttribute('y1', segment.y1);
+            line.setAttribute('x2', segment.x2);
+            line.setAttribute('y2', segment.y2);
+            line.setAttribute('stroke', strokeColor);
+            line.setAttribute('stroke-width', '5');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('stroke-linejoin', 'round');
+            line.setAttribute('opacity', '.86');
+
+            linesLayer.appendChild(line);
+
+        });
+
+        points.forEach(point => {
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', point.x);
+            circle.setAttribute('cy', point.y);
+            circle.setAttribute('r', '8');
+            circle.setAttribute('fill', '#fff');
+            circle.setAttribute('stroke', strokeColor);
+            circle.setAttribute('stroke-width', '4');
+
+            pointsLayer.appendChild(circle);
+
+        });
+
+    }
+
+    fillBars();
+
+    const resultData = getHashData();
+
+    renderRoute(resultData);
+    generateResultPng(resultData);
+
+})();
+</script>
+</body>
+</html>

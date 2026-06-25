@@ -1227,6 +1227,16 @@ if(hero && topNav){
     const finalOverlay = document.getElementById('expFinalOverlay');
     const finalLabel = document.getElementById('expFinalLabel');
     const comboRows = document.querySelectorAll('[data-exp-combo]');
+    const comboPanel = document.querySelector('.exp-combo-panel');
+
+    const endingEl = document.getElementById('expEnding');
+    const endingRoutesLayer = document.getElementById('expEndingRoutes');
+    const endingNodesLayer = document.getElementById('expEndingNodes');
+    const endingResetButton = document.querySelector('[data-exp-ending-reset]');
+
+    const endingCard = document.querySelector('.exp-ending-card');
+    const endingActions = document.querySelector('.exp-ending-actions');
+    const endingQrBox = document.getElementById('expEndingQrBox');
 
     if(!root || !boardSvg || !cellsLayer || !playerLayer) return;
 
@@ -1256,8 +1266,8 @@ if(hero && topNav){
             label:'Agujero negro'
         },
         ggggg:{
-            className:'fx-ferro',
-            label:'Topografía ferrofluida'
+            className:'fx-transport',
+            label:'Traslado'
         },
         rrrbg:{
             className:'fx-impact',
@@ -1265,7 +1275,7 @@ if(hero && topNav){
         },
         grbgb:{
             className:'fx-matrix',
-            label:'Pulso de escaneo'
+            label:'Escaneo'
         },
         bgrbr:{
             className:'fx-glitch',
@@ -1273,20 +1283,47 @@ if(hero && topNav){
         }
     };
 
-const INTERFERENCE_CLASSES = [
-    'fx-ghost',
-    'fx-blackhole',
-    'fx-ferro',
-    'fx-impact',
-    'fx-matrix',
-    'fx-glitch'
-];
+    const INTERFERENCE_CLASSES = [
+        'fx-ghost',
+        'fx-blackhole',
+        'fx-transport',
+        'fx-impact',
+        'fx-matrix',
+        'fx-glitch'
+    ];
 
     const colorKeys = {
         red:'r',
         green:'g',
         blue:'b'
     };
+
+    const progressColorNames = {
+        r:'red',
+        g:'green',
+        b:'blue'
+    };
+
+    const progressColorLabels = {
+        r:'roja',
+        g:'verde',
+        b:'azul'
+    };
+
+    function getProgressCellMarkup(key){
+
+        const colorName = progressColorNames[key];
+
+        if(!colorName) return '';
+
+        return `
+            <i 
+                class="exp-progress-cell exp-progress-cell--${colorName}" 
+                aria-label="Casilla ${progressColorLabels[key]}"
+            ></i>
+        `;
+
+    }
 
     const atmosphereColors = [
         'rgba(255,221,14,.42)',
@@ -1302,10 +1339,10 @@ const INTERFERENCE_CLASSES = [
     const FIRST_RADIUS = 190;
     const RING_GAP = 145;
 
-    const INITIAL_VIEW_SCALE = 0.50;
+    const INITIAL_VIEW_SCALE = 0.35;
 
     const MIN_VIEW_SCALE = 0.28;
-    const MAX_VIEW_SCALE = INITIAL_VIEW_SCALE;
+    const MAX_VIEW_SCALE = 0.50;
 
     let viewScale = INITIAL_VIEW_SCALE;
 
@@ -1329,8 +1366,6 @@ const INTERFERENCE_CLASSES = [
 
     let interferenceTimer = null;
     let interferenceLoadingTimer = null;
-    let waveFrame = null;
-    let activeInterference = null;
 
     let nodes = [];
     let edges = [];
@@ -1349,9 +1384,59 @@ const INTERFERENCE_CLASSES = [
     let currentRouteNodeIds = [];
     let discoveredSequences = new Set();
     let blackholeGuideLines = [];
+    let blackholeGuideSourceId = null;
+    let blackholeGuidesVisible = false;
+
+    let cursorRevealFrame = null;
+    let latestCursorEvent = null;
 
     let transformSequence = [];
-    let isComplete = false;
+
+    const BLACKHOLE_ACTIVE_RINGS = [1, 2, 3];
+
+    const BLACKHOLE_RING_SPEED = {
+        1: 0.000045,   // horario, lento
+        2: -0.000036,  // antihorario, lento
+        3: 0.000028    // horario, lento
+    };
+
+    let blackholeFrame = null;
+    let blackholeLastTime = null;
+
+    let transportTimer = null;
+    let transportPrepareTimer = null;
+    let transportLandingTimer = null;
+    let transportCandidateIds = [];
+
+    let impactFrame = null;
+    let impactEntryFrame = null;
+    let impactLastTime = null;
+    let impactOriginalViewBox = null;
+    let impactNodeIds = [];
+
+    let glitchTimer = null;
+    let glitchShakeTimer = null;
+    let glitchAngle = 0;
+
+    let matrixTimer = null;
+    let matrixActiveColor = null;
+    let matrixColorIndex = 0;
+
+    const MATRIX_COLORS = ['green', 'red', 'blue'];
+
+    const IMPACT_VISIBLE_COUNT = 36;
+
+    const ENDING_TOTAL_SERIES = Object.keys(transformFinals).length;
+    const ENDING_WAVE_DURATION = 1850;
+    const ENDING_QUIET_DELAY = 520;
+
+    let endingStarted = false;
+    let endingStartTimer = null;
+    let endingRevealTimer = null;
+    let endingQuietTimer = null;
+
+    let routeHistory = [];
+    let routeStepCounter = 0;
 
     function createSvgElement(tag, attributes = {}){
 
@@ -1401,8 +1486,12 @@ const INTERFERENCE_CLASSES = [
 
     function updateSvgViewBox(){
 
-        const width = boardWidth * viewScale;
+        const screenRatio = boardSvg.clientWidth && boardSvg.clientHeight
+            ? boardSvg.clientWidth / boardSvg.clientHeight
+            : window.innerWidth / window.innerHeight;
+
         const height = boardHeight * viewScale;
+        const width = height * screenRatio;
 
         const baseX = boardCenterX - width / 2;
         const baseY = boardCenterY - height / 2;
@@ -1433,8 +1522,14 @@ const INTERFERENCE_CLASSES = [
 
         const maxRadius = FIRST_RADIUS + (RING_COUNT - 1) * RING_GAP;
 
-        boardWidth = Math.max(window.innerWidth * 1.35, maxRadius * 2 + 360);
-        boardHeight = Math.max(window.innerHeight * 1.35, maxRadius * 2 + 360);
+        const baseSize = Math.max(
+            window.innerWidth * 1.35,
+            window.innerHeight * 1.35,
+            maxRadius * 2 + 360
+        );
+
+        boardWidth = baseSize;
+        boardHeight = baseSize;
 
         boardCenterX = boardWidth / 2;
         boardCenterY = boardHeight / 2;
@@ -1512,7 +1607,11 @@ const INTERFERENCE_CLASSES = [
                     ring * 7
                 ) * Math.PI / 180;
 
-                const color = colorPattern[(i + ring) % colorPattern.length];
+                let color = colorPattern[(i + ring) % colorPattern.length];
+
+                if(ring === 2 && i >= 3 && i <= 4){
+                    color = 'green';
+                }
 
                 nodes.push({
                     id:makeNodeId(ring, i),
@@ -1520,8 +1619,12 @@ const INTERFERENCE_CLASSES = [
                     index:i,
                     count,
                     radius,
+                    angle,
+                    renderAngle:angle,
                     x:boardCenterX + Math.cos(angle) * radius,
                     y:boardCenterY + Math.sin(angle) * radius,
+                    renderX:boardCenterX + Math.cos(angle) * radius,
+                    renderY:boardCenterY + Math.sin(angle) * radius,
                     size:playable ? baseSize : Math.max(22, baseSize * .52),
                     color,
                     revealed:true,
@@ -1673,12 +1776,15 @@ const INTERFERENCE_CLASSES = [
                 x2:b.x,
                 y2:b.y
             });
+            
             line.style.setProperty(
                 '--wave-delay',
                 `${Math.max(a.ring, b.ring) * .09}s`
             );
+            
             line.__edgeA = edge.a;
             line.__edgeB = edge.b;
+
             baseEdgesGroup.appendChild(line);
 
         });
@@ -1710,7 +1816,12 @@ const INTERFERENCE_CLASSES = [
 
     function getCellPoints(node){
 
-        const radius = node.size / 2;
+        const centerX = node.renderX ?? node.x;
+        const centerY = node.renderY ?? node.y;
+
+        const visualSize = node.renderSize ?? node.size;
+        const radius = visualSize / 2;
+
         const points = [];
 
         for(let i = 0; i < 8; i++){
@@ -1718,8 +1829,8 @@ const INTERFERENCE_CLASSES = [
             const angle = Math.PI / 8 + i * Math.PI / 4;
 
             points.push([
-                node.x + Math.cos(angle) * radius,
-                node.y + Math.sin(angle) * radius
+                centerX + Math.cos(angle) * radius,
+                centerY + Math.sin(angle) * radius
             ]);
 
         }
@@ -1741,13 +1852,41 @@ const INTERFERENCE_CLASSES = [
                 'data-color':node.color
             });
 
+            const direction = node.index % 2 === 0 ? 1 : -1;
+            const intensity = node.playable ? 18 : 8;
+            const blackholeX = direction * node.ring * intensity;
+
+            cell.style.setProperty('--blackhole-x', `${blackholeX}px`);
+            
+            const ringDepthDelay = node.playable
+                ? (node.ring - 1) * .72
+                : node.ring * .10;
+
+            const zNearScale = node.ring === 1
+                ? 1.26
+                : node.ring === 2
+                    ? 1.20
+                    : node.ring === 3
+                        ? 1.14
+                        : 1.04;
+
+            const zFarScale = node.ring === 1
+                ? .78
+                : node.ring === 2
+                    ? .84
+                    : node.ring === 3
+                        ? .90
+                        : .96;
+
+            cell.style.setProperty('--blackhole-delay', `${ringDepthDelay}s`);
+            cell.style.setProperty('--z-near-scale', zNearScale);
+            cell.style.setProperty('--z-far-scale', zFarScale);
+
             cell.style.setProperty('--wave-delay', `${node.ring * .12}s`);
 
-            if(node.playable){
-                cell.addEventListener('click', () => {
-                    moveToNode(node.id);
-                });
-            }
+            cell.addEventListener('click', () => {
+                moveToNode(node.id);
+            });
 
             node.element = cell;
 
@@ -1786,8 +1925,11 @@ const INTERFERENCE_CLASSES = [
 
         if(!player || !node) return;
 
-        player.setAttribute('cx', node.x);
-        player.setAttribute('cy', node.y);
+        const x = node.renderX ?? node.x;
+        const y = node.renderY ?? node.y;
+
+        player.setAttribute('cx', x);
+        player.setAttribute('cy', y);
 
     }
 
@@ -1804,6 +1946,18 @@ const INTERFERENCE_CLASSES = [
     function getAvailableNodeIds(){
 
         if(!currentNodeId) return [];
+
+        if(root.classList.contains('fx-matrix') && matrixActiveColor){
+            return getMatrixColorOptions(matrixActiveColor);
+        }
+
+        if(root.classList.contains('fx-impact') && impactNodeIds.length){
+            return impactNodeIds.filter(id => id !== currentNodeId);
+        }
+
+        if(root.classList.contains('fx-transport')){
+            return transportCandidateIds.filter(id => id !== currentNodeId);
+        }
 
         return getConnectedNodeIds(currentNodeId).filter(id => {
 
@@ -1833,11 +1987,32 @@ const INTERFERENCE_CLASSES = [
 
             if(!node.element) return;
 
-            node.element.classList.toggle('is-current', node.id === currentNodeId);
-            node.element.classList.toggle('is-available', availableIds.includes(node.id) && !isComplete);
+            const isCurrent = node.id === currentNodeId;
+            const isAvailable = availableIds.includes(node.id);
+
+            node.element.classList.toggle('is-current', isCurrent);
+            node.element.classList.toggle('is-available', isAvailable);
+
+            node.element.classList.toggle(
+                'is-transport-current',
+                root.classList.contains('fx-transport') && isCurrent
+            );
+
+            node.element.classList.toggle(
+                'is-transport-option',
+                root.classList.contains('fx-transport') && isAvailable
+            );
+
+            const isMatrix = root.classList.contains('fx-matrix');
+            const isMatrixNode = isMatrix && node.ring > 0;
+            const isMatrixActive = isMatrixNode && node.color === matrixActiveColor;
+            const isMatrixLocked = isMatrixNode && node.color !== matrixActiveColor && !isCurrent;
+
+            node.element.classList.toggle('is-matrix-active', isMatrixActive);
+            node.element.classList.toggle('is-matrix-locked', isMatrixLocked);
 
         });
-        updateBlackholeGuides();
+
     }
 
     function clearBlackholeGuides(){
@@ -1847,10 +2022,24 @@ const INTERFERENCE_CLASSES = [
         });
 
         blackholeGuideLines = [];
+        blackholeGuideSourceId = null;
+        blackholeGuidesVisible = false;
 
     }
 
-    function updateBlackholeGuides(){
+    function setBlackholeGuidesVisible(isVisible){
+
+        if(blackholeGuidesVisible === isVisible) return;
+
+        blackholeGuidesVisible = isVisible;
+
+        blackholeGuideLines.forEach(line => {
+            line.classList.toggle('is-visible', isVisible);
+        });
+
+    }
+
+    function buildBlackholeGuides(){
 
         clearBlackholeGuides();
 
@@ -1861,6 +2050,9 @@ const INTERFERENCE_CLASSES = [
 
         if(!currentNode) return;
 
+        const currentX = currentNode.renderX ?? currentNode.x;
+        const currentY = currentNode.renderY ?? currentNode.y;
+
         const availableIds = getAvailableNodeIds();
 
         availableIds.forEach((id, index) => {
@@ -1869,23 +2061,415 @@ const INTERFERENCE_CLASSES = [
 
             if(!targetNode) return;
 
+            const targetX = targetNode.renderX ?? targetNode.x;
+            const targetY = targetNode.renderY ?? targetNode.y;
+
             const guide = createSvgElement('line', {
                 class:'exp-blackhole-guide',
-                x1:currentNode.x,
-                y1:currentNode.y,
-                x2:targetNode.x,
-                y2:targetNode.y
+                x1:currentX,
+                y1:currentY,
+                x2:targetX,
+                y2:targetY
             });
 
-            guide.style.setProperty('--guide-delay', `${index * .12}s`);
+            guide.__fromId = currentNodeId;
+            guide.__toId = id;
+
+            guide.style.setProperty('--guide-delay', `${index * .06}s`);
 
             baseEdgesGroup.appendChild(guide);
             blackholeGuideLines.push(guide);
 
         });
 
+        blackholeGuideSourceId = currentNodeId;
+        setBlackholeGuidesVisible(false);
+
+    }
+
+    function updateBlackholeGuides(mouseX = null, mouseY = null){
+
+        if(!root.classList.contains('fx-blackhole')){
+            clearBlackholeGuides();
+            return;
+        }
+
+        if(!currentNodeId) return;
+
+        const currentNode = getNode(currentNodeId);
+
+        if(!currentNode) return;
+
+        if(blackholeGuideSourceId !== currentNodeId || !blackholeGuideLines.length){
+            buildBlackholeGuides();
+        }
+
+        const currentX = currentNode.renderX ?? currentNode.x;
+        const currentY = currentNode.renderY ?? currentNode.y;
+
+        if(mouseX === null || mouseY === null){
+            setBlackholeGuidesVisible(false);
+            return;
+        }
+
+        const distanceToCurrent = Math.hypot(
+            currentX - mouseX,
+            currentY - mouseY
+        );
+
+        const activationRadius = currentNode.size * 1.65;
+
+        setBlackholeGuidesVisible(distanceToCurrent <= activationRadius);
+
+    }
+
+    function randomizeBlackholeZDepth(){
+
+        nodes.forEach(node => {
+
+            if(!node.element) return;
+
+            const ringBaseDelay = node.playable
+                ? node.ring * .22
+                : node.ring * .08;
+
+            const randomDelay = Math.random() * 1.35;
+            const randomDuration = 3.8 + Math.random() * 2.4;
+
+            const nearBase = node.ring === 1
+                ? 1.30
+                : node.ring === 2
+                    ? 1.22
+                    : node.ring === 3
+                        ? 1.16
+                        : 1.06;
+
+            const farBase = node.ring === 1
+                ? .76
+                : node.ring === 2
+                    ? .84
+                    : node.ring === 3
+                        ? .90
+                        : .96;
+
+            const randomNear = nearBase + Math.random() * .10;
+            const randomFar = farBase - Math.random() * .06;
+
+            node.element.style.setProperty('--blackhole-delay', `${ringBaseDelay + randomDelay}s`);
+            node.element.style.setProperty('--blackhole-duration', `${randomDuration}s`);
+            node.element.style.setProperty('--z-near-scale', randomNear);
+            node.element.style.setProperty('--z-far-scale', randomFar);
+
+        });
+
+    }
+
+    function startBlackholeMotion(){
+
+        stopBlackholeMotion();
+
+        prepareBlackholeNodes();
+        randomizeBlackholeZDepth();
+
+        blackholeLastTime = performance.now();
+
+        function animateBlackhole(now){
+
+            const delta = now - blackholeLastTime;
+            blackholeLastTime = now;
+
+            updateBlackholeNodePositions(delta);
+            updateRenderedNodePositions();
+            updateBlackholeGuidePositions();
+
+            blackholeFrame = requestAnimationFrame(animateBlackhole);
+
+        }
+
+        blackholeFrame = requestAnimationFrame(animateBlackhole);
+
+    }
+
+    function stopBlackholeMotion(){
+
+        if(blackholeFrame){
+            cancelAnimationFrame(blackholeFrame);
+            blackholeFrame = null;
+        }
+
+        blackholeLastTime = null;
+
+        restoreBlackholeNodes();
+        updateRenderedNodePositions();
+        clearBlackholeGuides();
+
+    }
+
+    function clearTransportCandidates(){
+
+        transportCandidateIds = [];
+
+        nodes.forEach(node => {
+
+            if(!node.element) return;
+
+            node.element.classList.remove(
+                'is-transport-option',
+                'is-transport-current'
+            );
+
+        });
+
+    }
+
+    function flashTransportLanding(node){
+
+        if(!root.classList.contains('fx-transport') || !node) return;
+
+        const viewBox = boardSvg
+            .getAttribute('viewBox')
+            .split(' ')
+            .map(Number);
+
+        const [x, y, width, height] = viewBox;
+
+        const nodeX = node.renderX ?? node.x;
+        const nodeY = node.renderY ?? node.y;
+
+        const landX = ((nodeX - x) / width) * 100;
+        const landY = ((nodeY - y) / height) * 100;
+
+        root.style.setProperty('--transport-land-x', `${clamp(landX, 0, 100)}%`);
+        root.style.setProperty('--transport-land-y', `${clamp(landY, 0, 100)}%`);
+
+        root.classList.remove('is-transport-landing');
+
+        if(boardWrap){
+            void boardWrap.offsetWidth;
+        }
+
+        root.classList.add('is-transport-landing');
+
+        if(transportLandingTimer){
+            clearTimeout(transportLandingTimer);
+        }
+
+        transportLandingTimer = setTimeout(() => {
+            root.classList.remove('is-transport-landing');
+        }, 760);
+
+    }
+
+    function pickTransportCandidates(){
+
+        if(!root.classList.contains('fx-transport')) return;
+
+        const candidatePool = nodes.filter(node => {
+            if(node.ring === 0) return false;
+            if(node.id === currentNodeId) return false;
+
+            return true;
+        });
+
+        const shuffled = candidatePool
+            .map(node => ({
+                node,
+                value:Math.random()
+            }))
+            .sort((a, b) => a.value - b.value)
+            .map(item => item.node);
+
+        const candidateCount = Math.floor(rand(30, 51));
+
+        transportCandidateIds = shuffled
+            .slice(0, candidateCount)
+            .map(node => node.id);
+
+        updateCells();
+
+    }
+
+    function startTransportEffect(){
+
+        stopTransportEffect();
+
+        clearBlackholeGuides();
+
+        root.classList.add('is-transport-preparing');
+
+        /*
+            Primero: las casillas no jugables crecen hasta un tamaño
+            similar al de las casillas jugables.
+        */
+        nodes.forEach(node => {
+
+            if(!node.playable && node.ring > 0){
+                node.renderSize = 62;
+            }else{
+                node.renderSize = node.size;
+            }
+
+        });
+
+        updateRenderedNodePositions();
+
+        /*
+            Luego de una pausa breve, desaparece la estructura
+            y empiezan las apariciones aleatorias.
+        */
+        transportPrepareTimer = setTimeout(() => {
+
+            root.classList.remove('is-transport-preparing');
+            root.classList.add('is-transport-ready');
+
+            pickTransportCandidates();
+
+            transportTimer = setInterval(() => {
+                pickTransportCandidates();
+            }, 1500);
+
+        }, 850);
+
+    }
+
+    function stopTransportEffect(){
+
+        if(transportTimer){
+            clearInterval(transportTimer);
+            transportTimer = null;
+        }
+
+        if(transportPrepareTimer){
+            clearTimeout(transportPrepareTimer);
+            transportPrepareTimer = null;
+        }
+
+        root.classList.remove(
+            'is-transport-preparing',
+            'is-transport-ready'
+        );
+
+        transportCandidateIds = [];
+
+        nodes.forEach(node => {
+
+            node.renderSize = node.size;
+
+            if(node.element){
+                node.element.classList.remove(
+                    'is-transport-option',
+                    'is-transport-current'
+                );
+            }
+
+        });
+
+        updateRenderedNodePositions();
+
     }
     
+    function prepareBlackholeNodes(){
+        nodes.forEach(node => {
+            if(node.baseAngle == null){
+                node.baseAngle = node.angle;
+            }
+
+            if(node.baseX == null){
+                node.baseX = node.x;
+            }
+
+            if(node.baseY == null){
+                node.baseY = node.y;
+            }
+
+            if(node.renderAngle == null){
+                node.renderAngle = node.baseAngle;
+            }
+
+            if(node.renderX == null){
+                node.renderX = node.x;
+            }
+
+            if(node.renderY == null){
+                node.renderY = node.y;
+            }
+        });
+    }
+
+    function restoreBlackholeNodes(){
+        nodes.forEach(node => {
+            node.renderAngle = node.baseAngle ?? node.angle;
+            node.renderX = node.baseX ?? node.x;
+            node.renderY = node.baseY ?? node.y;
+        });
+
+        clearBlackholeGuides();
+    }
+
+    function getBoardCenter(){
+        return {
+            x: boardCenterX,
+            y: boardCenterY
+        };
+    }
+
+    function updateBlackholeNodePositions(delta = 16){
+
+        const center = getBoardCenter();
+
+        nodes.forEach(node => {
+
+            if(!node.playable || !BLACKHOLE_ACTIVE_RINGS.includes(node.ring)){
+                node.renderX = node.baseX ?? node.x;
+                node.renderY = node.baseY ?? node.y;
+                return;
+            }
+
+            node.renderAngle += BLACKHOLE_RING_SPEED[node.ring] * delta;
+
+            const radius = node.radius;
+
+            node.renderX = center.x + Math.cos(node.renderAngle) * radius;
+            node.renderY = center.y + Math.sin(node.renderAngle) * radius;
+
+        });
+
+    }
+
+    function updateRenderedNodePositions(){
+
+        nodes.forEach(node => {
+
+            if(!node.element) return;
+
+            node.element.setAttribute('points', getCellPoints(node));
+
+        });
+
+        updatePlayerPosition();
+
+    }
+
+    function updateBlackholeGuidePositions(){
+
+        if(!blackholeGuideLines.length) return;
+
+        blackholeGuideLines.forEach(line => {
+
+            const fromNode = getNode(line.__fromId);
+            const toNode = getNode(line.__toId);
+
+            if(!fromNode || !toNode) return;
+
+            line.setAttribute('x1', fromNode.renderX ?? fromNode.x);
+            line.setAttribute('y1', fromNode.renderY ?? fromNode.y);
+            line.setAttribute('x2', toNode.renderX ?? toNode.x);
+            line.setAttribute('y2', toNode.renderY ?? toNode.y);
+
+        });
+
+    }
+
     function updateCursorReveal(event){
 
         if(!boardSvg || !nodes.length) return;
@@ -1908,9 +2492,12 @@ const INTERFERENCE_CLASSES = [
 
             if(!node.element) return;
 
+            const nodeX = node.renderX ?? node.x;
+            const nodeY = node.renderY ?? node.y;
+
             const distance = Math.hypot(
-                node.x - mouseX,
-                node.y - mouseY
+                nodeX - mouseX,
+                nodeY - mouseY
             );
 
             /*
@@ -1924,6 +2511,24 @@ const INTERFERENCE_CLASSES = [
             node.element.classList.toggle('is-near-cursor', nearCursor);
 
         });
+        updateBlackholeGuides(mouseX, mouseY);
+    }
+
+    function scheduleCursorReveal(event){
+
+        latestCursorEvent = event;
+
+        if(cursorRevealFrame) return;
+
+        cursorRevealFrame = requestAnimationFrame(() => {
+
+            cursorRevealFrame = null;
+
+            if(latestCursorEvent){
+                updateCursorReveal(latestCursorEvent);
+            }
+
+        });
 
     }
 
@@ -1932,16 +2537,20 @@ const INTERFERENCE_CLASSES = [
         const from = getNode(fromId);
         const to = getNode(toId);
 
+        if(root.classList.contains('fx-impact')) return;
         if(!from || !to || !trailLayer) return;
 
         const line = createSvgElement('line', {
             class:'exp-trail is-active',
-            x1:from.x,
-            y1:from.y,
-            x2:to.x,
-            y2:to.y,
+            x1:from.renderX ?? from.x,
+            y1:from.renderY ?? from.y,
+            x2:to.renderX ?? to.x,
+            y2:to.renderY ?? to.y,
             stroke:selectedTrailColor
         });
+
+        line.__fromId = fromId;
+        line.__toId = toId;
 
         currentRouteLines.push(line);
         trailLayer.appendChild(line);
@@ -1961,6 +2570,645 @@ const INTERFERENCE_CLASSES = [
         selectedTrailColor = getRouteColor();
 
     }
+
+
+
+    function getEndingNodePosition(node){
+
+        return {
+            x:node.renderX ?? node.x,
+            y:node.renderY ?? node.y
+        };
+
+    }
+
+    function recordEndingStep(fromNodeId, toNodeId){
+
+        if(endingStarted) return;
+        if(!fromNodeId || !toNodeId) return;
+        if(fromNodeId === toNodeId) return;
+
+        const fromNode = getNode(fromNodeId);
+        const toNode = getNode(toNodeId);
+
+        if(!fromNode || !toNode) return;
+
+        const fromPosition = getEndingNodePosition(fromNode);
+        const toPosition = getEndingNodePosition(toNode);
+
+        routeHistory.push({
+            index:routeStepCounter,
+            from:fromNodeId,
+            to:toNodeId,
+            fromX:fromPosition.x,
+            fromY:fromPosition.y,
+            toX:toPosition.x,
+            toY:toPosition.y
+        });
+
+        routeStepCounter++;
+
+    }
+
+    function getResultBaseUrl(){
+
+        const url = new URL('https://fabianfloreses.github.io/Enrutate-U3-TiX---Fabian-Flores/resultado.html');
+
+        url.search = '';
+        url.hash = '';
+
+        return url;
+
+    }
+
+    function getEndingRoutePoints(){
+
+        const points = [];
+
+        routeHistory.forEach((step, index) => {
+
+            if(index === 0){
+                points.push({
+                    x:step.fromX,
+                    y:step.fromY
+                });
+            }
+
+            points.push({
+                x:step.toX,
+                y:step.toY
+            });
+
+        });
+
+        if(!points.length){
+            const currentNode = getNode(currentNodeId);
+
+            if(currentNode){
+                const currentPosition = getEndingNodePosition(currentNode);
+
+                points.push({
+                    x:currentPosition.x,
+                    y:currentPosition.y
+                });
+            }
+        }
+
+        return points;
+
+    }
+
+    function getEndingMappedPoints(){
+
+        const points = getEndingRoutePoints();
+
+        if(!points.length) return [];
+
+        let minX = Math.min(...points.map(point => point.x));
+        let maxX = Math.max(...points.map(point => point.x));
+        let minY = Math.min(...points.map(point => point.y));
+        let maxY = Math.max(...points.map(point => point.y));
+
+        if(Math.abs(maxX - minX) < 1){
+            minX -= 1;
+            maxX += 1;
+        }
+
+        if(Math.abs(maxY - minY) < 1){
+            minY -= 1;
+            maxY += 1;
+        }
+
+        const viewSize = 1000;
+        const padding = 110;
+        const availableSize = viewSize - padding * 2;
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        const scale = Math.min(
+            availableSize / width,
+            availableSize / height
+        );
+
+        const offsetX = (viewSize - width * scale) / 2;
+        const offsetY = (viewSize - height * scale) / 2;
+
+        const mappedPoints = points.map(point => {
+            return {
+                x:Math.round(offsetX + (point.x - minX) * scale),
+                y:Math.round(offsetY + (point.y - minY) * scale)
+            };
+        });
+
+        const cleanPoints = mappedPoints.filter((point, index, list) => {
+
+            if(index === 0) return true;
+
+            const previous = list[index - 1];
+
+            return point.x !== previous.x || point.y !== previous.y;
+
+        });
+
+        /*
+            Reduce el recorrido para que el QR sea escaneable.
+            Mantiene inicio, final y una muestra proporcional del camino.
+        */
+        const MAX_QR_POINTS = 26;
+
+        if(cleanPoints.length <= MAX_QR_POINTS){
+            return cleanPoints;
+        }
+
+        const reducedPoints = [];
+        const lastIndex = cleanPoints.length - 1;
+
+        for(let i = 0; i < MAX_QR_POINTS; i++){
+
+            const index = Math.round(
+                (i / (MAX_QR_POINTS - 1)) * lastIndex
+            );
+
+            const point = cleanPoints[index];
+            const previous = reducedPoints[reducedPoints.length - 1];
+
+            if(!previous || previous.x !== point.x || previous.y !== point.y){
+                reducedPoints.push(point);
+            }
+
+        }
+
+        return reducedPoints;
+
+    }
+
+    function encodePointValue(value){
+
+        const safeValue = Math.max(
+            0,
+            Math.min(
+                1295,
+                Math.round(value)
+            )
+        );
+
+        return safeValue
+            .toString(36)
+            .padStart(2, '0');
+
+    }
+
+    function encodeResultPoints(points){
+
+        return points
+            .map(point => {
+                return `${encodePointValue(point.x)}${encodePointValue(point.y)}`;
+            })
+            .join('');
+
+    }
+
+    function getResultColorKey(){
+
+        const colorKeys = {
+            violet:'v',
+            pink:'p',
+            orange:'o',
+            cyan:'c'
+        };
+
+        return colorKeys[selectedCharacter] || 'o';
+
+    }
+
+    function buildResultUrl(){
+
+        const url = getResultBaseUrl();
+
+        const colorKey = getResultColorKey();
+        const points = getEndingMappedPoints();
+        const encodedPoints = encodeResultPoints(points);
+
+        url.hash = `r=${colorKey}.${encodedPoints}`;
+
+        return url.toString();
+
+    }
+
+    function renderEndingQr(){
+
+        if(!endingQrBox) return;
+
+        endingQrBox.innerHTML = '';
+
+        const resultUrl = buildResultUrl();
+
+        if(!window.QRCode || !QRCode.toCanvas){
+
+            endingQrBox.innerHTML = '<span>QR no disponible</span>';
+            return;
+
+        }
+
+        const canvas = document.createElement('canvas');
+
+        QRCode.toCanvas(
+            canvas,
+            resultUrl,
+            {
+                width:190,
+                margin:4,
+                color:{
+                    dark:'#222222',
+                    light:'#FFFFFF'
+                }
+            },
+            error => {
+
+                if(error){
+                    endingQrBox.innerHTML = '<span>QR no disponible</span>';
+                    console.warn('No se pudo generar el QR:', error);
+                    return;
+                }
+
+                endingQrBox.innerHTML = '';
+                endingQrBox.appendChild(canvas);
+
+                syncEndingSideLayout();
+
+            }
+        );
+
+    }
+
+    function drawEndingConstellation(){
+
+        if(!endingRoutesLayer || !endingNodesLayer) return;
+
+        endingRoutesLayer.innerHTML = '';
+        endingNodesLayer.innerHTML = '';
+
+        const routeColor = selectedPlayerColor || '#008FB8';
+
+        const points = [];
+
+        routeHistory.forEach(step => {
+            points.push({ x:step.fromX, y:step.fromY });
+            points.push({ x:step.toX, y:step.toY });
+        });
+
+        if(!points.length){
+            const currentNode = getNode(currentNodeId);
+
+            if(currentNode){
+                const currentPosition = getEndingNodePosition(currentNode);
+
+                points.push({
+                    x:currentPosition.x,
+                    y:currentPosition.y
+                });
+            }
+        }
+
+        if(!points.length) return;
+
+        let minX = Math.min(...points.map(point => point.x));
+        let maxX = Math.max(...points.map(point => point.x));
+        let minY = Math.min(...points.map(point => point.y));
+        let maxY = Math.max(...points.map(point => point.y));
+
+        if(Math.abs(maxX - minX) < 1){
+            minX -= 1;
+            maxX += 1;
+        }
+
+        if(Math.abs(maxY - minY) < 1){
+            minY -= 1;
+            maxY += 1;
+        }
+
+        const viewSize = 1000;
+        const padding = 110;
+        const availableSize = viewSize - padding * 2;
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        const scale = Math.min(
+            availableSize / width,
+            availableSize / height
+        );
+
+        const offsetX = (viewSize - width * scale) / 2;
+        const offsetY = (viewSize - height * scale) / 2;
+
+        function mapPoint(x, y){
+
+            return {
+                x:offsetX + (x - minX) * scale,
+                y:offsetY + (y - minY) * scale
+            };
+
+        }
+
+        routeHistory.forEach((step, index) => {
+
+            const start = mapPoint(step.fromX, step.fromY);
+            const end = mapPoint(step.toX, step.toY);
+
+            const ghostLine = createSvgElement('line', {
+                class:'exp-ending-route exp-ending-route--ghost',
+                x1:start.x,
+                y1:start.y,
+                x2:end.x,
+                y2:end.y,
+                stroke:routeColor,
+                'stroke-width':14
+            });
+
+            endingRoutesLayer.appendChild(ghostLine);
+
+            const line = createSvgElement('line', {
+                class:'exp-ending-route',
+                x1:start.x,
+                y1:start.y,
+                x2:end.x,
+                y2:end.y,
+                stroke:routeColor,
+                'stroke-width':5
+            });
+
+            endingRoutesLayer.appendChild(line);
+
+            const length = line.getTotalLength();
+
+            line.style.strokeDasharray = length;
+            line.style.strokeDashoffset = length;
+            line.style.animationDelay = `${index * 45}ms`;
+
+        });
+
+        const endpointPoints = [];
+
+        if(routeHistory.length){
+
+            routeHistory.forEach((step, index) => {
+
+                endpointPoints.push({
+                    x:step.fromX,
+                    y:step.fromY,
+                    order:index * 2,
+                    kind:index === 0 ? 'start' : 'middle'
+                });
+
+                endpointPoints.push({
+                    x:step.toX,
+                    y:step.toY,
+                    order:index * 2 + 1,
+                    kind:index === routeHistory.length - 1 ? 'end' : 'middle'
+                });
+
+            });
+
+        }else if(points[0]){
+
+            endpointPoints.push({
+                x:points[0].x,
+                y:points[0].y,
+                order:0,
+                kind:'end'
+            });
+
+        }
+
+        endpointPoints.forEach(point => {
+
+            const mapped = mapPoint(point.x, point.y);
+
+            const radius = point.kind === 'start' || point.kind === 'end'
+                ? 10
+                : 6;
+
+            const circle = createSvgElement('circle', {
+                class:`exp-ending-point exp-ending-point-core exp-ending-point--${point.kind}`,
+                cx:mapped.x,
+                cy:mapped.y,
+                r:radius,
+                stroke:routeColor
+            });
+
+            circle.style.animationDelay = `${180 + point.order * 22}ms`;
+
+            endingNodesLayer.appendChild(circle);
+
+        });
+
+    }
+
+    function quietEndingBoard(){
+
+        clearTimeout(interferenceTimer);
+        clearTimeout(interferenceLoadingTimer);
+
+        root.classList.remove(
+            'is-final',
+            'is-interference-loading',
+            ...INTERFERENCE_CLASSES
+        );
+
+        stopMatrixEffect();
+        stopGlitchEffect();
+        stopImpactEffect();
+        stopBlackholeMotion();
+        stopTransportEffect();
+        clearBlackholeGuides();
+
+        if(finalOverlay){
+            finalOverlay.setAttribute('aria-hidden', 'true');
+            finalOverlay.removeAttribute('data-state');
+        }
+
+    }
+
+    function syncEndingSideLayout(){
+
+        if(!endingEl || !endingCard || !comboPanel || !endingActions) return;
+        if(!endingEl.classList.contains('is-ending-revealed')) return;
+
+        /*
+            En pantallas pequeñas dejamos que el responsive maneje todo.
+        */
+        if(window.innerWidth <= 768){
+            root.style.removeProperty('--ending-side-width');
+            root.style.removeProperty('--ending-side-left');
+            root.style.removeProperty('--ending-panel-top');
+            root.style.removeProperty('--ending-actions-top');
+            return;
+        }
+
+        const cardRect = endingCard.getBoundingClientRect();
+
+        const sideWidth = window.innerWidth < 1280
+            ? 300
+            : 320;
+
+        const gap = clamp(
+            window.innerWidth * .028,
+            28,
+            46
+        );
+
+        let sideLeft = cardRect.right + gap;
+
+        const maxSideLeft = window.innerWidth - sideWidth - 28;
+
+        if(sideLeft > maxSideLeft){
+            sideLeft = maxSideLeft;
+        }
+
+        /*
+            Alturas reales de la leyenda y botones.
+            Así el conjunto completo queda centrado respecto a la tarjeta.
+        */
+        const panelHeight = comboPanel.offsetHeight;
+        const actionsHeight = endingActions.offsetHeight;
+
+        const stackGap = clamp(
+            window.innerHeight * .055,
+            38,
+            58
+        );
+
+        const stackHeight = panelHeight + stackGap + actionsHeight;
+
+        const cardCenterY = cardRect.top + cardRect.height / 2;
+
+        let stackTop = cardCenterY - stackHeight / 2;
+
+        const minTop = 28;
+        const maxTop = window.innerHeight - stackHeight - 28;
+
+        stackTop = clamp(
+            stackTop,
+            minTop,
+            Math.max(minTop, maxTop)
+        );
+
+        const actionsTop = stackTop + panelHeight + stackGap;
+
+        root.style.setProperty('--ending-side-width', `${sideWidth}px`);
+        root.style.setProperty('--ending-side-left', `${Math.round(sideLeft)}px`);
+        root.style.setProperty('--ending-panel-top', `${Math.round(stackTop)}px`);
+        root.style.setProperty('--ending-actions-top', `${Math.round(actionsTop)}px`);
+
+    }
+
+    function startEndingSequence(){
+
+        if(endingStarted) return;
+        if(!endingEl) return;
+
+        endingStarted = true;
+
+        clearTimeout(endingStartTimer);
+        clearTimeout(endingRevealTimer);
+        clearTimeout(endingQuietTimer);
+
+        root.classList.add('is-ending-locked');
+
+        endingEl.removeAttribute('aria-hidden');
+        endingEl.classList.add('is-ending-active');
+
+        endingQuietTimer = setTimeout(() => {
+            quietEndingBoard();
+        }, ENDING_QUIET_DELAY);
+
+        endingRevealTimer = setTimeout(() => {
+            drawEndingConstellation();
+            renderEndingQr();
+
+            endingEl.classList.add('is-ending-revealed');
+
+            if(comboPanel){
+                comboPanel.classList.add('is-ending-centered');
+            }
+
+            syncEndingSideLayout();
+
+            requestAnimationFrame(() => {
+                syncEndingSideLayout();
+            });
+
+            setTimeout(() => {
+                syncEndingSideLayout();
+            }, 120);
+
+        }, ENDING_WAVE_DURATION);
+    }
+
+    function checkEndingCompletion(delay = 0){
+
+        if(endingStarted) return;
+
+        if(discoveredSequences.size < ENDING_TOTAL_SERIES) return;
+
+        clearTimeout(endingStartTimer);
+
+        endingStartTimer = setTimeout(() => {
+            startEndingSequence();
+        }, delay);
+
+    }
+
+    function resetEndingState(){
+
+        clearTimeout(endingStartTimer);
+        clearTimeout(endingRevealTimer);
+        clearTimeout(endingQuietTimer);
+
+        endingStarted = false;
+        endingStartTimer = null;
+        endingRevealTimer = null;
+        endingQuietTimer = null;
+
+        routeHistory = [];
+        routeStepCounter = 0;
+
+        root.classList.remove('is-ending-locked');
+
+        root.style.removeProperty('--ending-side-width');
+        root.style.removeProperty('--ending-side-left');
+        root.style.removeProperty('--ending-panel-top');
+        root.style.removeProperty('--ending-actions-top');
+
+        if(comboPanel){
+            comboPanel.classList.remove('is-ending-centered');
+        }
+
+        if(endingEl){
+            endingEl.setAttribute('aria-hidden', 'true');
+            endingEl.classList.remove(
+                'is-ending-active',
+                'is-ending-revealed'
+            );
+        }
+
+        if(endingRoutesLayer){
+            endingRoutesLayer.innerHTML = '';
+        }
+
+        if(endingNodesLayer){
+            endingNodesLayer.innerHTML = '';
+        }
+
+        if(endingQrBox){
+            endingQrBox.innerHTML = '<span>QR</span>';
+        }
+
+    }
+
+
 
     function createAtmosphereBlob(node){
 
@@ -2014,29 +3262,11 @@ const INTERFERENCE_CLASSES = [
 
     }
 
-    function distortSpace(){
-
-        if(!boardWrap) return;
-
-        const tiltX = `${Math.random() * 12 - 6}deg`;
-        const tiltY = `${Math.random() * 14 - 7}deg`;
-
-        boardWrap.style.setProperty('--exp-tilt-x', tiltX);
-        boardWrap.style.setProperty('--exp-tilt-y', tiltY);
-
-        boardWrap.classList.add('is-spatial');
-
-        setTimeout(() => {
-            boardWrap.classList.remove('is-spatial');
-        }, 1500);
-
-    }
-
     function registerTransformation(color){
 
         const key = colorKeys[color];
 
-        if(!key || isComplete) return;
+        if(!key) return;
 
         transformSequence.push(key);
 
@@ -2086,27 +3316,34 @@ const INTERFERENCE_CLASSES = [
         if(progressLabel){
 
             if(transformSequence.length === 0){
+
                 progressLabel.textContent = 'Encadena 5 transformaciones';
+
             }else{
-                progressLabel.textContent = `Serie: ${transformSequence.join(' + ').toUpperCase()}`;
+
+                const cellsMarkup = transformSequence
+                    .map((key, index) => {
+
+                        const cell = getProgressCellMarkup(key);
+
+                        if(index === 0){
+                            return cell;
+                        }
+
+                        return `<span class="exp-progress-plus">+</span>${cell}`;
+
+                    })
+                    .join('');
+
+                progressLabel.innerHTML = `
+                    <span class="exp-progress-text">Serie:</span>
+                    <span class="exp-progress-cells">${cellsMarkup}</span>
+                `;
+
             }
 
         }
 
-    }
-
-    function stopWaveEffect(){
-        /*
-            No se limpian estilos por frame porque el wave
-            ya no modifica elementos directamente con JS.
-        */
-    }
-
-    function startWaveEffect(){
-        /*
-            El efecto wave ahora se ejecuta por CSS,
-            no por requestAnimationFrame.
-        */
     }
 
     function returnCharacterToCenter(){
@@ -2143,83 +3380,771 @@ const INTERFERENCE_CLASSES = [
             finalLabel.textContent = `Cargando ${finalData.label}...`;
         }
 
-        root.classList.remove(...INTERFERENCE_CLASSES);
         root.classList.add('is-interference-loading');
 
-        interferenceLoadingTimer = setTimeout(() => {
+        requestAnimationFrame(() => {
 
-            root.classList.remove('is-interference-loading');
-            root.classList.add(finalData.className);
-            root.classList.add('is-final');
+            requestAnimationFrame(() => {
 
-            if(finalOverlay){
-                finalOverlay.setAttribute('data-state', 'active');
-            }
+                interferenceLoadingTimer = setTimeout(() => {
 
-            if(finalLabel){
-                finalLabel.textContent = finalData.label;
-            }
+                    root.classList.remove(...INTERFERENCE_CLASSES);
 
-            if(trailLayer){
-                trailLayer.querySelectorAll('.exp-trail').forEach(line => {
-                    line.classList.add('is-final');
-                });
-            }
+                    stopMatrixEffect();
+                    stopGlitchEffect();
+                    stopImpactEffect();
+                    stopBlackholeMotion();
+                    stopTransportEffect();
+                    clearBlackholeGuides();
 
-            returnCharacterToCenter();
+                    root.classList.remove('is-interference-loading');
+                    root.classList.add(finalData.className);
+                    root.classList.add('is-final');
 
-            interferenceTimer = setTimeout(() => {
+                    if(finalOverlay){
+                        finalOverlay.setAttribute('data-state', 'active');
+                    }
 
-                transformSequence = [];
-                updateSequencePanel();
+                    if(finalLabel){
+                        finalLabel.textContent = finalData.label;
+                    }
 
-                if(finalOverlay){
-                    finalOverlay.setAttribute('aria-hidden', 'true');
-                    finalOverlay.removeAttribute('data-state');
-                }
+                    if(finalData.className !== 'fx-impact' && trailLayer){
+                        trailLayer.querySelectorAll('.exp-trail').forEach(line => {
+                            line.classList.add('is-final');
+                        });
+                    }
 
-                root.classList.remove('is-final');
+                    returnCharacterToCenter();
 
-            }, 950);
+                    if(finalData.className === 'fx-blackhole'){
+                        startBlackholeMotion();
+                    }
 
-        }, 320);
-    }
+                    if(finalData.className === 'fx-transport'){
+                        startTransportEffect();
+                    }
 
-    function scatterCells(){
+                    if(finalData.className === 'fx-impact'){
+                        if(trailLayer){
+                            trailLayer.innerHTML = '';
+                        }
 
-        nodes.forEach(node => {
+                        currentRouteLines = [];
+                        startImpactEffect();
+                    }
 
-            if(!node.element || node.ring === 0) return;
+                    if(finalData.className === 'fx-glitch'){
+                        startGlitchEffect();
+                    }
 
-            const angle = Math.atan2(
-                node.y - boardCenterY,
-                node.x - boardCenterX
-            );
+                    if(finalData.className === 'fx-matrix'){
+                        startMatrixEffect();
+                    }
 
-            const force = 34 + node.ring * 12;
-            const rotate = Math.random() * 80 - 40;
+                    checkEndingCompletion(1250);
 
-            node.element.classList.add('is-scattered');
+                    interferenceTimer = setTimeout(() => {
 
-            node.element.style.transform = `
-                translate(${Math.cos(angle) * force}px, ${Math.sin(angle) * force}px)
-                rotate(${rotate}deg)
-            `;
+                        transformSequence = [];
+                        updateSequencePanel();
 
-        });
+                        if(finalOverlay){
+                            finalOverlay.setAttribute('aria-hidden', 'true');
+                            finalOverlay.removeAttribute('data-state');
+                        }
 
-        setTimeout(() => {
+                        root.classList.remove('is-final');
 
-            nodes.forEach(node => {
+                    }, 950);
 
-                if(!node.element) return;
-
-                node.element.style.transform = '';
-                node.element.classList.remove('is-scattered');
+                }, 620);
 
             });
 
-        }, 1600);
+        });
+
+    }
+
+
+
+    function getImpactBounds(){
+
+        const viewBox = boardSvg
+            .getAttribute('viewBox')
+            .split(' ')
+            .map(Number);
+
+        const [x, y, width, height] = viewBox;
+
+        const margin = 86;
+
+        return {
+            minX:x + margin,
+            maxX:x + width - margin,
+            minY:y + margin,
+            maxY:y + height - margin
+        };
+
+    }
+
+    function updateImpactEdges(){
+
+        if(!baseEdgesGroup) return;
+
+        baseEdgesGroup.querySelectorAll('.exp-base-edge').forEach(line => {
+
+            const a = getNode(line.__edgeA);
+            const b = getNode(line.__edgeB);
+
+            if(!a || !b) return;
+
+            line.setAttribute('x1', a.renderX ?? a.x);
+            line.setAttribute('y1', a.renderY ?? a.y);
+            line.setAttribute('x2', b.renderX ?? b.x);
+            line.setAttribute('y2', b.renderY ?? b.y);
+
+        });
+
+    }
+
+    function updateImpactTrails(){
+
+        if(!trailLayer) return;
+
+        trailLayer.querySelectorAll('.exp-trail').forEach(line => {
+
+            const from = getNode(line.__fromId);
+            const to = getNode(line.__toId);
+
+            if(!from || !to) return;
+
+            line.setAttribute('x1', from.renderX ?? from.x);
+            line.setAttribute('y1', from.renderY ?? from.y);
+            line.setAttribute('x2', to.renderX ?? to.x);
+            line.setAttribute('y2', to.renderY ?? to.y);
+
+        });
+
+    }
+
+    function updateImpactGeometry(){
+
+        nodes.forEach(node => {
+
+            if(!node.element) return;
+
+            node.element.setAttribute('points', getCellPoints(node));
+
+        });
+
+        updateImpactEdges();
+        updateImpactTrails();
+        updatePlayerPosition();
+
+    }
+
+    function shuffleImpactItems(items){
+
+        return [...items].sort(() => Math.random() - .5);
+
+    }
+
+    function getBaseImpactAvailableIds(){
+
+        return getConnectedNodeIds(currentNodeId)
+            .filter(id => {
+
+                const node = getNode(id);
+
+                return node && node.playable && id !== currentNodeId;
+
+            });
+
+    }
+
+    function pickImpactNodes(){
+
+        const requiredIds = [
+            currentNodeId,
+            ...getBaseImpactAvailableIds()
+        ].filter(Boolean);
+
+        const uniqueRequiredIds = [...new Set(requiredIds)];
+
+        const pool = nodes.filter(node => {
+            return (
+                node.ring > 0 &&
+                !uniqueRequiredIds.includes(node.id)
+            );
+        });
+
+        const shuffledPool = shuffleImpactItems(pool);
+
+        const remainingCount = Math.max(
+            0,
+            IMPACT_VISIBLE_COUNT - uniqueRequiredIds.length
+        );
+
+        impactNodeIds = [
+            ...uniqueRequiredIds,
+            ...shuffledPool.slice(0, remainingCount).map(node => node.id)
+        ];
+
+    }
+
+    function setImpactWideViewBox(){
+
+        if(!boardSvg) return;
+
+        const currentViewBox = boardSvg.getAttribute('viewBox');
+
+        if(!impactOriginalViewBox){
+            impactOriginalViewBox = currentViewBox;
+        }
+
+        const [x, y, width, height] = currentViewBox
+            .split(' ')
+            .map(Number);
+
+        const screenRatio = boardSvg.clientWidth / boardSvg.clientHeight;
+
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+
+        const impactHeight = height;
+        const impactWidth = impactHeight * screenRatio;
+
+        boardSvg.setAttribute(
+            'viewBox',
+            `${centerX - impactWidth / 2} ${centerY - impactHeight / 2} ${impactWidth} ${impactHeight}`
+        );
+
+    }
+
+    function restoreImpactViewBox(){
+
+        if(!impactOriginalViewBox) return;
+
+        boardSvg.setAttribute('viewBox', impactOriginalViewBox);
+        impactOriginalViewBox = null;
+
+    }
+
+    function easeImpactOut(t){
+        return 1 - Math.pow(1 - t, 3);
+    }
+
+    function mixImpactValue(a, b, t){
+        return a + (b - a) * t;
+    }
+
+    function prepareImpactNodes(){
+
+        setImpactWideViewBox();
+        pickImpactNodes();
+
+        const bounds = getImpactBounds();
+        const activeImpactIds = new Set(impactNodeIds);
+
+        nodes.forEach(node => {
+
+            if(node.baseX == null){
+                node.baseX = node.x;
+            }
+
+            if(node.baseY == null){
+                node.baseY = node.y;
+            }
+
+            const isActiveImpactNode = activeImpactIds.has(node.id);
+
+            if(!isActiveImpactNode){
+
+                node.renderX = node.baseX ?? node.x;
+                node.renderY = node.baseY ?? node.y;
+                node.renderSize = node.size;
+
+                node.impactVX = 0;
+                node.impactVY = 0;
+
+                if(node.element){
+                    node.element.classList.remove('is-impacting');
+                    node.element.classList.add('is-impact-hidden');
+                }
+
+                return;
+
+            }
+
+            if(node.element){
+                node.element.classList.remove('is-impact-hidden');
+                node.element.classList.add('is-impacting');
+            }
+
+            if(node.ring === 0){
+
+                node.renderX = node.x;
+                node.renderY = node.y;
+                node.renderSize = Math.max(node.size, 68);
+
+                node.impactVX = 0;
+                node.impactVY = 0;
+
+                return;
+
+            }
+
+            const startX = node.renderX ?? node.baseX ?? node.x;
+            const startY = node.renderY ?? node.baseY ?? node.y;
+
+            const targetX = rand(bounds.minX, bounds.maxX);
+            const targetY = rand(bounds.minY, bounds.maxY);
+
+            const targetSize = node.playable
+                ? Math.max(node.size, 74)
+                : Math.max(node.size, 52);
+
+            node.impactStartX = startX;
+            node.impactStartY = startY;
+            node.impactStartSize = node.size;
+
+            node.impactTargetX = targetX;
+            node.impactTargetY = targetY;
+            node.impactTargetSize = targetSize;
+
+            node.renderX = startX;
+            node.renderY = startY;
+            node.renderSize = node.size;
+
+            const angle = rand(0, Math.PI * 2);
+
+            const speed = node.playable
+                ? rand(.18, .34)
+                : rand(.10, .22);
+
+            node.impactVX = Math.cos(angle) * speed;
+            node.impactVY = Math.sin(angle) * speed;
+
+        });
+
+        updateImpactGeometry();
+        updateCells();
+
+    }
+
+    function updateImpactMotion(delta){
+
+        const bounds = getImpactBounds();
+
+        nodes.forEach(node => {
+
+            if(!impactNodeIds.includes(node.id)) return;
+            if(node.ring === 0) return;
+
+            let x = node.renderX ?? node.x;
+            let y = node.renderY ?? node.y;
+
+            let vx = node.impactVX ?? 0;
+            let vy = node.impactVY ?? 0;
+
+            x += vx * delta;
+            y += vy * delta;
+
+            const radius = (node.renderSize ?? node.size) / 2;
+
+            if(x - radius < bounds.minX){
+                x = bounds.minX + radius;
+                vx = Math.abs(vx);
+            }
+
+            if(x + radius > bounds.maxX){
+                x = bounds.maxX - radius;
+                vx = -Math.abs(vx);
+            }
+
+            if(y - radius < bounds.minY){
+                y = bounds.minY + radius;
+                vy = Math.abs(vy);
+            }
+
+            if(y + radius > bounds.maxY){
+                y = bounds.maxY - radius;
+                vy = -Math.abs(vy);
+            }
+
+            /*
+                Pequeña variación para que no sea un rebote mecánico.
+            */
+            vx += rand(-.006, .006);
+            vy += rand(-.006, .006);
+
+            const speed = Math.hypot(vx, vy);
+            const maxSpeed = node.playable ? .34 : .22;
+            const minSpeed = node.playable ? .11 : .06;
+
+            if(speed > maxSpeed){
+                vx = (vx / speed) * maxSpeed;
+                vy = (vy / speed) * maxSpeed;
+            }
+
+            if(speed < minSpeed){
+                const angle = rand(0, Math.PI * 2);
+                vx = Math.cos(angle) * minSpeed;
+                vy = Math.sin(angle) * minSpeed;
+            }
+
+            node.renderX = x;
+            node.renderY = y;
+
+            node.impactVX = vx;
+            node.impactVY = vy;
+
+        });
+
+        updateImpactGeometry();
+
+    }
+
+    function startImpactEffect(){
+
+        stopImpactEffect();
+
+        prepareImpactNodes();
+
+        root.classList.add('is-impact-dispersing');
+
+        const entryStart = performance.now();
+        const entryDuration = 950;
+
+        function animateImpactEntry(now){
+
+            const progress = Math.min((now - entryStart) / entryDuration, 1);
+            const eased = easeImpactOut(progress);
+
+            impactNodeIds.forEach(id => {
+
+                const node = getNode(id);
+
+                if(!node || node.ring === 0) return;
+
+                node.renderX = mixImpactValue(
+                    node.impactStartX,
+                    node.impactTargetX,
+                    eased
+                );
+
+                node.renderY = mixImpactValue(
+                    node.impactStartY,
+                    node.impactTargetY,
+                    eased
+                );
+
+                node.renderSize = mixImpactValue(
+                    node.impactStartSize,
+                    node.impactTargetSize,
+                    eased
+                );
+
+            });
+
+            updateImpactGeometry();
+
+            if(progress < 1){
+
+                impactEntryFrame = requestAnimationFrame(animateImpactEntry);
+                return;
+
+            }
+
+            root.classList.remove('is-impact-dispersing');
+
+            impactLastTime = performance.now();
+
+            function animateImpact(now){
+
+                const delta = now - impactLastTime;
+                impactLastTime = now;
+
+                updateImpactMotion(delta);
+
+                impactFrame = requestAnimationFrame(animateImpact);
+
+            }
+
+            impactFrame = requestAnimationFrame(animateImpact);
+
+        }
+
+        impactEntryFrame = requestAnimationFrame(animateImpactEntry);
+
+    }
+
+    function stopImpactEffect(){
+
+        if(impactEntryFrame){
+            cancelAnimationFrame(impactEntryFrame);
+            impactEntryFrame = null;
+        }
+
+        if(impactFrame){
+            cancelAnimationFrame(impactFrame);
+            impactFrame = null;
+        }
+
+        impactLastTime = null;
+
+        root.classList.remove('is-impact-dispersing');
+
+        impactNodeIds = [];
+
+        nodes.forEach(node => {
+
+            node.renderX = node.baseX ?? node.x;
+            node.renderY = node.baseY ?? node.y;
+            node.renderSize = node.size;
+
+            node.impactVX = 0;
+            node.impactVY = 0;
+
+            node.impactStartX = null;
+            node.impactStartY = null;
+            node.impactStartSize = null;
+
+            node.impactTargetX = null;
+            node.impactTargetY = null;
+            node.impactTargetSize = null;
+
+            if(node.element){
+                node.element.classList.remove(
+                    'is-impacting',
+                    'is-impact-hidden'
+                );
+            }
+
+        });
+
+        restoreImpactViewBox();
+        updateImpactGeometry();
+        updateCells();
+
+    }
+
+
+
+
+    function updateGlitchTransform(){
+
+        const transform = `rotate(${glitchAngle} ${boardCenterX} ${boardCenterY})`;
+
+        [
+            layerRingsGroup,
+            baseEdgesGroup,
+            fogLayer,
+            trailLayer,
+            cellsLayer,
+            playerLayer
+        ].forEach(group => {
+
+            if(group){
+                group.setAttribute('transform', transform);
+            }
+
+        });
+
+    }
+
+    function startGlitchEffect(){
+
+        stopGlitchEffect();
+
+        glitchAngle = 0;
+        updateGlitchTransform();
+
+        function runGlitchCycle(){
+
+            /*
+                Primero: movimiento incómodo breve.
+            */
+            root.classList.add('is-glitch-shaking');
+
+            glitchShakeTimer = setTimeout(() => {
+
+                /*
+                    Luego: giro brusco.
+                */
+                root.classList.remove('is-glitch-shaking');
+
+                glitchAngle += 90;
+                updateGlitchTransform();
+
+                const nextDelay = Math.floor(rand(2100, 3000));
+
+                glitchTimer = setTimeout(runGlitchCycle, nextDelay);
+
+            }, 720);
+
+        }
+
+        glitchTimer = setTimeout(runGlitchCycle, 1100);
+
+    }
+
+    function stopGlitchEffect(){
+
+        if(glitchTimer){
+            clearTimeout(glitchTimer);
+            glitchTimer = null;
+        }
+
+        if(glitchShakeTimer){
+            clearTimeout(glitchShakeTimer);
+            glitchShakeTimer = null;
+        }
+
+        glitchAngle = 0;
+
+        root.classList.remove('is-glitch-shaking');
+
+        root.style.removeProperty('--glitch-rotation');
+
+        [
+            layerRingsGroup,
+            baseEdgesGroup,
+            fogLayer,
+            trailLayer,
+            cellsLayer,
+            playerLayer
+        ].forEach(group => {
+
+            if(group){
+                group.removeAttribute('transform');
+            }
+
+        });
+
+    }
+    
+
+
+
+    function getMatrixBaseAvailableIds(){
+
+        if(!currentNodeId) return [];
+
+        return getConnectedNodeIds(currentNodeId)
+            .filter(id => {
+
+                const node = getNode(id);
+
+                if(!node) return false;
+                if(!node.playable) return false;
+                if(node.ring === 0) return false;
+                if(currentRouteNodeIds.includes(id)) return false;
+
+                return true;
+
+            });
+
+    }
+
+    function getMatrixColorOptions(color){
+
+        return getMatrixBaseAvailableIds()
+            .filter(id => {
+
+                const node = getNode(id);
+
+                return node && node.color === color;
+
+            });
+
+    }
+
+    function setMatrixActiveColor(color){
+
+        matrixActiveColor = color;
+
+        root.setAttribute('data-matrix-color', color);
+
+        root.classList.remove('is-matrix-scanning');
+
+        if(boardWrap){
+            void boardWrap.offsetWidth;
+        }
+
+        root.classList.add('is-matrix-scanning');
+
+        updateCells();
+
+    }
+
+    function advanceMatrixScan(){
+
+        const nextColor = MATRIX_COLORS[matrixColorIndex];
+
+        matrixColorIndex = (matrixColorIndex + 1) % MATRIX_COLORS.length;
+
+        setMatrixActiveColor(nextColor);
+
+    }
+
+    function startMatrixEffect(){
+
+        stopMatrixEffect();
+
+        clearBlackholeGuides();
+
+        matrixColorIndex = 0;
+
+        advanceMatrixScan();
+
+        matrixTimer = setInterval(() => {
+            advanceMatrixScan();
+        }, 1500);
+
+    }
+
+    function stopMatrixEffect(){
+
+        if(matrixTimer){
+            clearInterval(matrixTimer);
+            matrixTimer = null;
+        }
+
+        mmatrixActiveColor = null;
+        matrixColorIndex = 0;
+
+        root.classList.remove('is-matrix-scanning');
+        root.removeAttribute('data-matrix-color');
+
+        nodes.forEach(node => {
+
+            if(!node.element) return;
+
+            node.element.classList.remove(
+                'is-matrix-active',
+                'is-matrix-locked'
+            );
+
+        });
+
+        updateCells();
+
+    }
+
+
+
+
+    function pulseRedCell(node){
+
+        if(!node || !node.element) return;
+
+        node.element.classList.add('is-red-pulse');
+
+        setTimeout(() => {
+            node.element.classList.remove('is-red-pulse');
+        }, 700);
 
     }
 
@@ -2238,7 +4163,7 @@ const INTERFERENCE_CLASSES = [
         }
 
         if(node.color === 'red'){
-            distortSpace();
+            pulseRedCell(node);
         }
 
     }
@@ -2255,6 +4180,8 @@ const INTERFERENCE_CLASSES = [
 
         currentNodeId = nodeId;
 
+        recordEndingStep(previousNodeId, currentNodeId);
+
         drawTrail(previousNodeId, currentNodeId);
 
         if(!currentRouteNodeIds.includes(previousNodeId)){
@@ -2267,20 +4194,38 @@ const INTERFERENCE_CLASSES = [
 
         const currentNode = getNode(currentNodeId);
 
+        if(root.classList.contains('fx-transport')){
+            flashTransportLanding(currentNode);
+            pickTransportCandidates();
+        }
+
         applyColorEvent(currentNode);
 
         updatePlayerPosition();
         updatePlayerColor();
         updateCells();
 
-        const hasOptions = getAvailableNodeIds().length > 0;
+        if(root.classList.contains('fx-matrix')){
+            advanceMatrixScan();
+
+            if(matrixTimer){
+                clearInterval(matrixTimer);
+            }
+
+            matrixTimer = setInterval(() => {
+                advanceMatrixScan();
+            }, 1500);
+        }
+
+        const hasOptions = root.classList.contains('fx-matrix')
+            ? getMatrixBaseAvailableIds().length > 0
+            : getAvailableNodeIds().length > 0;
 
         if(!hasOptions){
             setTimeout(() => {
                 returnCharacterToCenter();
             }, 450);
         }
-
     }
 
     function selectCharacter(character){
@@ -2333,23 +4278,24 @@ const INTERFERENCE_CLASSES = [
 
     function resetExperiment(){
 
+        resetEndingState();
+
         root.classList.remove(
             'is-final',
             ...INTERFERENCE_CLASSES
         );
-
+        
+        stopMatrixEffect();
+        stopGlitchEffect();
+        stopImpactEffect();
+        stopBlackholeMotion();
+        stopTransportEffect();
         clearBlackholeGuides();
         
         discoveredSequences.clear();
-        stopWaveEffect();
-        activeInterference = null;
 
         if(finalOverlay){
             finalOverlay.setAttribute('aria-hidden', 'true');
-        }
-
-        if(boardWrap){
-            boardWrap.classList.remove('is-spatial');
         }
 
         if(trailLayer){
@@ -2361,7 +4307,6 @@ const INTERFERENCE_CLASSES = [
         }
 
         transformSequence = [];
-        isComplete = false;
 
         routeIndex = 0;
         selectedTrailColor = getRouteColor();
@@ -2399,7 +4344,6 @@ const INTERFERENCE_CLASSES = [
         renderPlayer();
 
         transformSequence = [];
-        isComplete = false;
 
         updateSequencePanel();
         updateCells();
@@ -2430,23 +4374,13 @@ const INTERFERENCE_CLASSES = [
         resetButton.addEventListener('click', resetExperiment);
     }
 
+    if(endingResetButton){
+        endingResetButton.addEventListener('click', resetExperiment);
+    }
+
     if(boardWrap){
 
         boardWrap.addEventListener('wheel', event => {
-
-            boardWrap.addEventListener('mousemove', updateCursorReveal);
-
-            boardWrap.addEventListener('mouseleave', () => {
-
-                nodes.forEach(node => {
-
-                    if(node.element){
-                        node.element.classList.remove('is-near-cursor');
-                    }
-
-                });
-
-            });
 
             event.preventDefault();
 
@@ -2509,7 +4443,7 @@ const INTERFERENCE_CLASSES = [
 
         });
 
-        boardWrap.addEventListener('mousemove', updateCursorReveal);
+        boardWrap.addEventListener('mousemove', scheduleCursorReveal);
 
         boardWrap.addEventListener('mouseleave', () => {
 
@@ -2520,6 +4454,8 @@ const INTERFERENCE_CLASSES = [
                 }
 
             });
+
+            clearBlackholeGuides();
 
         });
 
@@ -2546,6 +4482,10 @@ const INTERFERENCE_CLASSES = [
 
     window.addEventListener('resize', () => {
         initBoard();
+    });
+
+    window.addEventListener('resize', () => {
+        syncEndingSideLayout();
     });
 
     initBoard();

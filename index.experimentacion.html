@@ -122,7 +122,7 @@
                         <i class="combo-dot combo-dot--green"></i><span>+</span>
                         <i class="combo-dot combo-dot--green"></i><span>+</span>
                         <i class="combo-dot combo-dot--green"></i>
-                        <strong>Ferro</strong>
+                        <strong>Traslado</strong>
                     </div>
 
                     <div class="exp-combo-row" data-exp-combo="rrrbg">
@@ -140,7 +140,7 @@
                         <i class="combo-dot combo-dot--blue"></i><span>+</span>
                         <i class="combo-dot combo-dot--green"></i><span>+</span>
                         <i class="combo-dot combo-dot--blue"></i>
-                        <strong>Matrix</strong>
+                        <strong>Escaneo</strong>
                     </div>
 
                     <div class="exp-combo-row" data-exp-combo="bgrbr">
@@ -156,10 +156,92 @@
 
             </div>
 
+            <!-- CIERRE DE EXPERIENCIA -->
+            <section class="exp-ending" id="expEnding" aria-hidden="true">
+
+                <div class="exp-ending-wave" aria-hidden="true"></div>
+
+            <div class="exp-ending-content">
+
+                <div class="exp-ending-card">
+
+                    <div class="exp-ending-info">
+
+                        <p class="exp-ending-kicker">
+                            Has completado todas las series
+                        </p>
+
+                        <h2 class="exp-ending-title">
+                            Lectura<br>
+                            <span>de recorridos</span>
+                        </h2>
+
+                        <p class="exp-ending-text">
+                            Los puntos marcan las casillas donde el recorrido comienza o termina; las líneas reúnen los caminos seguidos durante la lectura del tablero.
+                        </p>
+
+                        <!-- AQUÍ VA EL QR -->
+                        <div class="exp-ending-qr" aria-label="Código QR del recorrido">
+                            <div class="exp-ending-qr-box" id="expEndingQrBox">
+                                <span>QR</span>
+                            </div>
+
+                            <p>
+                                ¡Puedes descargar tu recorrido!<br>
+                                Escanea aquí con tu teléfono
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div class="exp-ending-map" aria-label="Mapa final del recorrido">
+
+                        <svg 
+                            class="exp-ending-svg" 
+                            id="expEndingSvg" 
+                            viewBox="0 0 1000 1000" 
+                            preserveAspectRatio="xMidYMid meet"
+                            role="img"
+                            aria-label="Constelación de caminos tomados"
+                        >
+                            <g id="expEndingRoutes"></g>
+                            <g id="expEndingNodes"></g>
+                        </svg>
+
+                    </div>
+
+                </div>
+
+                <!-- AQUÍ VAN SOLO LOS BOTONES -->
+                <div class="exp-ending-actions">
+
+                    <button 
+                        class="exp-ending-button exp-ending-button--reset" 
+                        type="button" 
+                        data-exp-ending-reset
+                    >
+                        Reiniciar
+                    </button>
+
+                    <a 
+                        class="exp-ending-button exp-ending-button--back" 
+                        href="index.html"
+                    >
+                        Volver al inicio
+                    </a>
+
+                </div>
+
+            </div>
+
+            </section>
+
         </section>
 
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.0/qrcode.min.js"></script>
     <script src="script.js"></script>
+
 </body>
 </html>
