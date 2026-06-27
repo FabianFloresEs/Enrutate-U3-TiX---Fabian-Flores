@@ -854,6 +854,25 @@ body{
         transform .35s ease;
 }
 
+.exp-cell-core{
+    pointer-events:none;
+
+    opacity:0;
+
+    fill:rgba(255,255,255,.96);
+    stroke:rgba(255,255,255,.78);
+    stroke-width:2;
+
+    filter:
+        drop-shadow(0 0 8px rgba(255,255,255,.42));
+
+    transition:
+        opacity .28s ease,
+        fill .28s ease,
+        stroke .28s ease,
+        filter .28s ease;
+}
+
 .exp-cell.is-visible{
     opacity:.78;
     pointer-events:auto;
@@ -1243,16 +1262,16 @@ body{
     fill:transparent !important;
     stroke:rgba(255,255,255,.12) !important;
 
-    transform:scale(.72);
+    transform:scale(1);
 
     filter:none;
 
     transition:
-        opacity .55s ease,
-        transform .55s cubic-bezier(.2,.8,.2,1),
-        filter .55s ease,
-        fill .55s ease,
-        stroke .55s ease;
+        opacity .35s ease,
+        transform .35s cubic-bezier(.2,.8,.2,1),
+        filter .35s ease,
+        fill .35s ease,
+        stroke .35s ease;
 }
 
 .exp-root.fx-transport.is-transport-preparing .exp-base-edge,
@@ -1297,21 +1316,26 @@ body{
 }
 
 .exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option{
-    --transport-scale:.92;
-    --transport-scale-near:1.14;
-    --transport-scale-mid:1;
-
     opacity:1;
     pointer-events:auto;
+    transform:scale(1);
 
     stroke:rgba(255,255,255,.92) !important;
     stroke-width:7;
 
-    animation:expTransportAppear 2.8s ease-in-out infinite;
+    animation:none;
 
     filter:
-        drop-shadow(0 0 14px rgba(255,255,255,.55))
+        drop-shadow(0 0 12px rgba(255,255,255,.48))
         drop-shadow(0 10px 18px rgba(0,0,0,.12));
+
+    transition:
+        opacity .22s ease,
+        fill .22s ease,
+        stroke .22s ease,
+        stroke-width .22s ease,
+        filter .22s ease,
+        transform .18s ease;
 }
 
 .exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option.is-filler{
@@ -1320,6 +1344,45 @@ body{
     --transport-scale-mid:1.04;
 
     stroke-width:7;
+}
+
+.exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option.is-transport-warning{
+    opacity:1;
+
+    stroke:#ffffff !important;
+    stroke-width:10;
+
+    animation:expTransportWarningShake .38s ease-in-out infinite;
+
+    filter:
+        drop-shadow(0 0 14px rgba(255,255,255,.78))
+        drop-shadow(0 0 22px rgba(106,170,44,.42))
+        drop-shadow(0 10px 18px rgba(0,0,0,.16));
+}
+
+.exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option.is-transport-expanded{
+    opacity:1;
+
+    stroke:#ffffff !important;
+    stroke-width:10;
+
+    animation:expTransportFlash .42s ease both;
+
+    filter:
+        drop-shadow(0 0 18px rgba(255,255,255,.82))
+        drop-shadow(0 0 28px rgba(106,170,44,.46))
+        drop-shadow(0 12px 20px rgba(0,0,0,.16));
+}
+
+.exp-root.fx-transport.is-transport-ready .exp-cell.is-transport-option.is-transport-shrinking{
+    opacity:1;
+
+    stroke:rgba(255,255,255,.86) !important;
+    stroke-width:8;
+
+    filter:
+        drop-shadow(0 0 12px rgba(255,255,255,.46))
+        drop-shadow(0 10px 18px rgba(0,0,0,.12));
 }
 
 .exp-root.fx-transport .exp-cell.is-transport-option[data-color="blue"]{
@@ -1342,6 +1405,41 @@ body{
     filter:
         drop-shadow(0 0 16px rgba(255,255,255,.95))
         drop-shadow(0 10px 18px rgba(0,0,0,.22));
+}
+
+@keyframes expTransportWarningShake{
+    0%,100%{
+        transform:translate(0,0) scale(1.05);
+    }
+
+    25%{
+        transform:translate(2px,-1px) scale(1.07);
+    }
+
+    50%{
+        transform:translate(-1px,2px) scale(1.05);
+    }
+
+    75%{
+        transform:translate(1px,1px) scale(1.07);
+    }
+}
+
+@keyframes expTransportFlash{
+    0%{
+        transform:scale(1);
+        opacity:.42;
+    }
+
+    42%{
+        transform:scale(1.04);
+        opacity:1;
+    }
+
+    100%{
+        transform:scale(1);
+        opacity:1;
+    }
 }
 
 /* ================================= */
@@ -1478,7 +1576,9 @@ body{
 }
 
 .exp-root.fx-impact .exp-player{
-    animation:expImpactPlayerShake .62s ease-in-out infinite;
+    animation:none;
+    transition:none;
+    transform:none;
 
     filter:
         drop-shadow(0 10px 18px rgba(0,0,0,.22))
@@ -2008,24 +2108,77 @@ body{
 }
 
 /* ================================= */
+/* FANTASMA — DIFERENCIA DE CASILLAS */
+/* ================================= */
+
+/*
+    Casillas jugables pero NO habilitadas:
+    se revela solo el trazo de color, sin relleno.
+*/
+.exp-root.fx-ghost .exp-cell.is-near-cursor.is-playable:not(.is-available):not(.is-current)[data-color="blue"]{
+    fill:transparent !important;
+    stroke:rgba(0,143,184,.95) !important;
+}
+
+.exp-root.fx-ghost .exp-cell.is-near-cursor.is-playable:not(.is-available):not(.is-current)[data-color="green"]{
+    fill:transparent !important;
+    stroke:rgba(106,170,44,.95) !important;
+}
+
+.exp-root.fx-ghost .exp-cell.is-near-cursor.is-playable:not(.is-available):not(.is-current)[data-color="red"]{
+    fill:transparent !important;
+    stroke:rgba(214,36,22,.95) !important;
+}
+
+.exp-root.fx-ghost .exp-cell.is-near-cursor.is-playable:not(.is-available):not(.is-current)[data-color="yellow"]{
+    fill:transparent !important;
+    stroke:rgba(255,221,14,1) !important;
+}
+
+/*
+    Casillas habilitadas:
+    se mantienen con trazo y relleno de color.
+*/
+.exp-root.fx-ghost .exp-cell.is-near-cursor.is-available{
+    stroke-width:8.5 !important;
+
+    filter:
+        drop-shadow(0 0 12px rgba(255,255,255,.85))
+        drop-shadow(0 8px 16px rgba(0,0,0,.14)) !important;
+}
+
+/*
+    Casillas no jugables:
+    se mantienen como están actualmente,
+    con trazo y relleno de color.
+*/
+.exp-root.fx-ghost .exp-cell.is-near-cursor.is-filler{
+    stroke-width:8 !important;
+    opacity:1 !important;
+}
+
+/* ================================= */
 /* EFECTO AGUJERO — Rojo x5 */
 /* ================================= */
 
 .exp-board-screen,
 .exp-board-wrap{
     transition:
-        background 3.2s ease,
-        filter 1.4s ease,
-        transform 1.4s cubic-bezier(.2,.8,.2,1);
+        background-color .28s ease,
+        filter .35s ease,
+        transform .8s cubic-bezier(.2,.8,.2,1);
+}
+
+.exp-root.fx-blackhole .exp-board-wrap::before{
+    opacity:0;
+    background:none;
+    filter:none;
+    transform:none;
 }
 
 .exp-root.fx-blackhole .exp-board-screen,
 .exp-root.fx-blackhole .exp-board-wrap{
-    background:
-        radial-gradient(circle at 50% 50%, rgba(214,36,22,.18), transparent 22%),
-        radial-gradient(circle at 20% 80%, rgba(0,143,184,.10), transparent 34%),
-        radial-gradient(circle at 78% 18%, rgba(255,221,14,.08), transparent 28%),
-        #050505;
+    background:#000;
 }
 
 .exp-root.fx-blackhole .exp-board-wrap{
@@ -2046,20 +2199,17 @@ body{
 
 /* Casillas como piezas desplazadas */
 .exp-root.fx-blackhole .exp-cell{
-    fill:rgba(236,236,236,.06) !important;
-    stroke:rgba(255,255,255,.24) !important;
-
-    opacity:.20;
+    opacity:.62;
 
     filter:
-        drop-shadow(0 8px 14px rgba(0,0,0,.36));
+        drop-shadow(0 0 7px currentColor);
 
     transition:
-        transform 1.25s cubic-bezier(.2,.8,.2,1),
-        fill .8s ease,
-        stroke .8s ease,
-        opacity .8s ease,
-        filter .8s ease;
+        transform .45s cubic-bezier(.2,.8,.2,1),
+        fill .25s ease,
+        stroke .25s ease,
+        opacity .25s ease,
+        filter .25s ease;
 }
 
 /* Jugables más presentes */
@@ -2067,7 +2217,7 @@ body{
     opacity:.78;
     stroke-width:5.8;
 
-    animation:expBlackholeZRing 4.8s cubic-bezier(.2,.8,.2,1) infinite;
+    animation:expBlackholeZRing var(--blackhole-duration, 3.2s) cubic-bezier(.2,.8,.2,1) infinite;
     animation-delay:var(--blackhole-delay, 0s);
 
     transform-origin:center;
@@ -2095,23 +2245,61 @@ body{
 
 /* Colores drenados, no brillantes */
 .exp-root.fx-blackhole .exp-cell[data-color="blue"].is-playable{
-    fill:rgba(0,143,184,.20) !important;
-    stroke:rgba(0,143,184,.55) !important;
+    fill:rgba(0,143,184,.42) !important;
+    stroke:rgba(0,180,230,1) !important;
+    color:rgba(0,180,230,.75);
 }
 
 .exp-root.fx-blackhole .exp-cell[data-color="green"].is-playable{
-    fill:rgba(106,170,44,.18) !important;
-    stroke:rgba(106,170,44,.52) !important;
+    fill:rgba(106,170,44,.42) !important;
+    stroke:rgba(130,210,58,1) !important;
+    color:rgba(130,210,58,.75);
 }
 
 .exp-root.fx-blackhole .exp-cell[data-color="red"].is-playable{
-    fill:rgba(214,36,22,.26) !important;
-    stroke:rgba(214,36,22,.72) !important;
+    fill:rgba(214,36,22,.48) !important;
+    stroke:rgba(255,67,48,1) !important;
+    color:rgba(255,67,48,.78);
 }
 
 .exp-root.fx-blackhole .exp-cell[data-color="yellow"].is-playable{
-    fill:rgba(255,221,14,.28) !important;
-    stroke:rgba(255,221,14,.82) !important;
+    fill:rgba(255,221,14,.50) !important;
+    stroke:rgba(255,221,14,1) !important;
+    color:rgba(255,221,14,.78);
+}
+
+.exp-root.fx-blackhole .exp-cell[data-color="blue"].is-filler{
+    fill:rgba(0,143,184,.24) !important;
+    stroke:rgba(0,143,184,.78) !important;
+    color:rgba(0,143,184,.58);
+}
+
+.exp-root.fx-blackhole .exp-cell[data-color="green"].is-filler{
+    fill:rgba(106,170,44,.24) !important;
+    stroke:rgba(106,170,44,.76) !important;
+    color:rgba(106,170,44,.58);
+}
+
+.exp-root.fx-blackhole .exp-cell[data-color="red"].is-filler{
+    fill:rgba(214,36,22,.28) !important;
+    stroke:rgba(214,36,22,.82) !important;
+    color:rgba(214,36,22,.62);
+}
+
+.exp-root.fx-blackhole .exp-cell[data-color="yellow"].is-filler{
+    fill:rgba(255,221,14,.30) !important;
+    stroke:rgba(255,221,14,.86) !important;
+    color:rgba(255,221,14,.62);
+}
+
+.exp-root.fx-blackhole .exp-cell.is-filler,
+.exp-root.fx-blackhole .exp-cell.is-depth-far.is-filler,
+.exp-root.fx-blackhole .exp-cell.is-depth-fog.is-filler{
+    opacity:.42;
+}
+
+.exp-root.fx-blackhole .exp-cell.is-playable{
+    opacity:.94;
 }
 
 /* Caminos locales del Agujero */
@@ -2135,12 +2323,10 @@ body{
 }
 
 .exp-blackhole-guide.is-visible{
-    opacity:.82;
-    stroke-width:5.8;
+    opacity:.24;
+    stroke-width:2.8;
 
-    filter:
-        drop-shadow(0 0 10px rgba(255,255,255,.32))
-        drop-shadow(0 0 14px rgba(214,36,22,.22));
+    filter:none;
 }
 
 /* Rastro del usuario */
@@ -2162,12 +2348,32 @@ body{
 
 .exp-root.fx-blackhole .exp-cell.is-available{
     opacity:1;
-    stroke:#ffffff !important;
-    stroke-width:8;
+    stroke:rgba(255,255,255,.74) !important;
+    stroke-width:6.2;
 
     filter:
-        drop-shadow(0 0 12px rgba(255,255,255,.72))
-        drop-shadow(0 8px 16px rgba(0,0,0,.34));
+        drop-shadow(0 0 6px rgba(255,255,255,.28))
+        drop-shadow(0 6px 12px rgba(0,0,0,.26));
+}
+
+.exp-root.fx-blackhole .exp-cell-core.is-available{
+    opacity:1;
+
+    fill:rgba(255,255,255,.70);
+    stroke:rgba(255,255,255,.70);
+    stroke-width:1.4;
+
+    filter:none;
+}
+
+.exp-root.fx-blackhole .exp-cell-core.is-current{
+    opacity:.72;
+
+    fill:rgba(255,255,255,.42);
+    stroke:var(--exp-player-color);
+    stroke-width:2.2;
+
+    filter:none;
 }
 
 /* Personaje estable */
@@ -2235,32 +2441,34 @@ body{
 @keyframes expBlackholeZRingFiller{
     0%,100%{
         transform:scale(var(--z-far-scale, .92));
-        opacity:.08;
+        opacity:.16;
 
         filter:
+            drop-shadow(0 0 5px rgba(255,255,255,.10))
             drop-shadow(0 1px 3px rgba(0,0,0,.24));
     }
 
     24%{
         transform:scale(var(--z-near-scale, 1.08));
-        opacity:.24;
+        opacity:.42;
 
         filter:
-            drop-shadow(0 0 10px rgba(255,255,255,.12))
+            drop-shadow(0 0 14px rgba(255,255,255,.18))
             drop-shadow(0 8px 16px rgba(0,0,0,.34));
     }
 
     52%{
         transform:scale(.98);
-        opacity:.14;
+        opacity:.28;
 
         filter:
+            drop-shadow(0 0 8px rgba(255,255,255,.12))
             drop-shadow(0 3px 8px rgba(0,0,0,.28));
     }
 
     78%{
         transform:scale(var(--z-far-scale, .92));
-        opacity:.10;
+        opacity:.18;
     }
 }
 
@@ -2818,25 +3026,58 @@ body{
     transition:
         transform .22s ease,
         box-shadow .22s ease,
-        background-color .22s ease;
+        background-color .22s ease,
+        color .22s ease,
+        background-position .35s ease;
 }
 
 .exp-ending-button:hover{
     transform:translateY(-2px);
 }
 
+/* Reiniciar: botón con colores del juego */
 .exp-ending-button--reset{
+    background:
+        linear-gradient(
+            135deg,
+            var(--green) 0%,
+            var(--blue) 48%,
+            var(--red) 100%
+        );
+
+    background-size:180% 180%;
+    background-position:0% 50%;
+
+    color:white;
+
+    box-shadow:
+        0 14px 30px rgba(0,0,0,.18);
+}
+
+.exp-ending-button--reset:hover{
+    background-position:100% 50%;
+
+    color:white;
+
+    box-shadow:
+        0 18px 38px rgba(0,0,0,.22);
+}
+
+/* Volver al inicio: blanco → negro */
+.exp-ending-button--back{
+    background:white;
+    color:#222;
+
+    box-shadow:
+        0 12px 28px rgba(0,0,0,.12);
+}
+
+.exp-ending-button--back:hover{
     background:#222;
     color:white;
 
-    box-shadow:0 12px 28px rgba(0,0,0,.18);
-}
-
-.exp-ending-button--back{
-    background:var(--yellow);
-    color:#222;
-
-    box-shadow:0 12px 28px rgba(255,221,14,.28);
+    box-shadow:
+        0 16px 34px rgba(0,0,0,.20);
 }
 
 .exp-root.is-ending-locked .exp-board-svg,

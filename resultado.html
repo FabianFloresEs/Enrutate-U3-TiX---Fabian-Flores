@@ -35,7 +35,11 @@
     body{
         display:flex;
         justify-content:center;
-        padding:18px 14px 24px;
+        align-items:flex-start;
+
+        padding:0;
+
+        overflow-x:hidden;
     }
 
     .result-page{
@@ -157,14 +161,16 @@
     }
 
     .result-export-panel{
-        width:min(100%, 430px);
+        width:100vw;
+        max-width:520px;
+        min-height:100dvh;
 
         display:none;
         flex-direction:column;
         align-items:center;
-        gap:14px;
+        gap:12px;
 
-        padding:0 0 18px;
+        padding:10px 10px 18px;
     }
 
     body.is-image-ready .result-page{
@@ -175,29 +181,16 @@
         display:flex;
     }
 
-    .result-export-note{
-        width:100%;
-
-        margin:0;
-
-        color:#222;
-
-        font-size:.92rem;
-        font-weight:800;
-        line-height:1.35;
-        text-align:center;
-    }
-
     .result-export-image{
         width:100%;
         height:auto;
 
         display:block;
 
-        border-radius:26px;
+        border-radius:22px;
 
         box-shadow:
-            0 18px 46px rgba(0,0,0,.18);
+            0 14px 36px rgba(0,0,0,.16);
     }
 
     .result-save-button{
@@ -205,7 +198,7 @@
 
         display:block;
 
-        padding:14px 18px;
+        padding:15px 18px;
         border-radius:999px;
 
         background:#1f2025;
@@ -216,6 +209,27 @@
 
         font-size:1rem;
         font-weight:900;
+    }
+
+    @media (max-width:520px){
+
+        .result-export-panel{
+            width:100vw;
+            max-width:none;
+            padding:8px 8px 16px;
+        }
+
+        .result-export-image{
+            width:100%;
+            border-radius:18px;
+        }
+
+        .result-save-button{
+            width:100%;
+            padding:15px 18px;
+            font-size:.98rem;
+        }
+
     }
 
     .empty-note{
@@ -283,11 +297,6 @@
     </main>
 
 <section class="result-export-panel" id="resultExportPanel" hidden>
-
-    <p class="result-export-note">
-        Mantén presionada la imagen para guardarla en tu teléfono.
-    </p>
-
     <img 
         class="result-export-image" 
         id="resultExportImage" 
@@ -463,9 +472,60 @@
         drawRoundedRect(ctx, 0, 0, w, h, 36);
 
         const strokeColor = data && data.c ? data.c : '#FF8A00';
-        const points = data && Array.isArray(data.p) ? data.p : [];
 
-        if(points.length > 1){
+        let points = data && Array.isArray(data.p)
+            ? data.p
+            : [];
+
+        const segments = data && Array.isArray(data.s)
+            ? data.s.map(segment => ({
+                x1:segment[0],
+                y1:segment[1],
+                x2:segment[2],
+                y2:segment[3]
+            }))
+            : points.slice(0, -1).map((point, index) => {
+
+                const nextPoint = points[index + 1];
+
+                return {
+                    x1:point.x,
+                    y1:point.y,
+                    x2:nextPoint.x,
+                    y2:nextPoint.y
+                };
+
+            });
+
+        if(!points.length && segments.length){
+
+            const pointKeys = new Set();
+
+            points = [];
+
+            segments.forEach(segment => {
+
+                const segmentPoints = [
+                    { x:segment.x1, y:segment.y1 },
+                    { x:segment.x2, y:segment.y2 }
+                ];
+
+                segmentPoints.forEach(point => {
+
+                    const key = `${point.x},${point.y}`;
+
+                    if(pointKeys.has(key)) return;
+
+                    pointKeys.add(key);
+                    points.push(point);
+
+                });
+
+            });
+
+        }
+
+        if(segments.length || points.length){
 
             ctx.save();
 
@@ -479,15 +539,12 @@
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
-            for(let i = 0; i < points.length - 1; i++){
+            segments.forEach(segment => {
 
-                const a = points[i];
-                const b = points[i + 1];
-
-                const x1 = (a.x / 1000) * innerW;
-                const y1 = (a.y / 1000) * innerH;
-                const x2 = (b.x / 1000) * innerW;
-                const y2 = (b.y / 1000) * innerH;
+                const x1 = (segment.x1 / 1000) * innerW;
+                const y1 = (segment.y1 / 1000) * innerH;
+                const x2 = (segment.x2 / 1000) * innerW;
+                const y2 = (segment.y2 / 1000) * innerH;
 
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
@@ -506,7 +563,7 @@
                 ctx.lineWidth = 5;
                 ctx.stroke();
 
-            }
+            });
 
             points.forEach(point => {
 
@@ -652,21 +709,113 @@
 
     }
 
+    function decodeResultSegments(encodedSegments){
+
+    const segments = [];
+
+    for(let i = 0; i < encodedSegments.length; i += 8){
+
+        const x1 = decodePointValue(encodedSegments.slice(i, i + 2));
+        const y1 = decodePointValue(encodedSegments.slice(i + 2, i + 4));
+        const x2 = decodePointValue(encodedSegments.slice(i + 4, i + 6));
+        const y2 = decodePointValue(encodedSegments.slice(i + 6, i + 8));
+
+        if(
+            Number.isNaN(x1) ||
+            Number.isNaN(y1) ||
+            Number.isNaN(x2) ||
+            Number.isNaN(y2)
+        ){
+            continue;
+        }
+
+        segments.push([x1, y1, x2, y2]);
+
+    }
+
+    return segments;
+
+}
+
+    function getUniqueSegmentPoints(segments){
+
+        const points = [];
+        const pointKeys = new Set();
+
+        segments.forEach(segment => {
+
+            const segmentPoints = [
+                { x:segment[0], y:segment[1] },
+                { x:segment[2], y:segment[3] }
+            ];
+
+            segmentPoints.forEach(point => {
+
+                const key = `${point.x},${point.y}`;
+
+                if(pointKeys.has(key)) return;
+
+                pointKeys.add(key);
+                points.push(point);
+
+            });
+
+        });
+
+        return points;
+
+    }
+
+    function decodeCompactSegmentResult(value){
+
+        const parts = value.split('.');
+        const colorKey = parts[0] || 'o';
+        const encodedSegments = parts[1] || '';
+
+        const segments = decodeResultSegments(encodedSegments);
+
+        return {
+            c:RESULT_COLOR_MAP[colorKey] || '#FF8A00',
+            s:segments,
+            p:getUniqueSegmentPoints(segments)
+        };
+
+    }
+
     function getHashData(){
 
-        const raw = location.hash.replace(/^#/, '');
+        const searchParams = new URLSearchParams(location.search);
 
-        if(!raw) return null;
+        const rawHash = location.hash.replace(/^#/, '');
+        const hashParams = new URLSearchParams(rawHash);
 
-        const params = new URLSearchParams(raw);
+        /*
+            Formato actual del QR:
+            resultado.html?r=...
 
-        const compactData = params.get('r');
+            Compatibilidad anterior:
+            resultado.html#r=...
+            resultado.html#s=...
+        */
+        const compactData =
+            searchParams.get('r') ||
+            hashParams.get('r');
 
         if(compactData){
             return decodeCompactResult(compactData);
         }
 
-        const encoded = params.get('data');
+        const compactSegments =
+            searchParams.get('s') ||
+            hashParams.get('s');
+
+        if(compactSegments){
+            return decodeCompactSegmentResult(compactSegments);
+        }
+
+        const encoded =
+            searchParams.get('data') ||
+            hashParams.get('data');
 
         if(!encoded) return null;
 

@@ -1395,10 +1395,12 @@ if(hero && topNav){
     const BLACKHOLE_ACTIVE_RINGS = [1, 2, 3];
 
     const BLACKHOLE_RING_SPEED = {
-        1: 0.000045,   // horario, lento
-        2: -0.000036,  // antihorario, lento
-        3: 0.000028    // horario, lento
+        1: 0.000138,
+        2: -0.000118,
+        3: 0.000096
     };
+
+    const BLACKHOLE_FILLER_SPEED = 0.000060;
 
     let blackholeFrame = null;
     let blackholeLastTime = null;
@@ -1406,6 +1408,8 @@ if(hero && topNav){
     let transportTimer = null;
     let transportPrepareTimer = null;
     let transportLandingTimer = null;
+    let transportFrame = null;
+    let transportLastTime = null;
     let transportCandidateIds = [];
 
     let impactFrame = null;
@@ -1423,8 +1427,33 @@ if(hero && topNav){
     let matrixColorIndex = 0;
 
     const MATRIX_COLORS = ['green', 'red', 'blue'];
+    const TRANSPORT_COLORS = ['blue', 'green', 'red'];
+
+    const TRANSPORT_ACTIVE_COUNT = 24;
+    const TRANSPORT_CELL_SIZE = 66;
+    const TRANSPORT_EXPANDED_SIZE = 96;
+
+    const TRANSPORT_SPEED_MIN = .08;
+    const TRANSPORT_SPEED_MAX = .20;
+    const TRANSPORT_MAX_DELTA = 28;
+
+    const TRANSPORT_WARNING_DURATION = 1150;
+    const TRANSPORT_SHRINK_DURATION = 920;
+
+    const TRANSPORT_CYCLE_MIN = 1000;
+    const TRANSPORT_CYCLE_MAX = 3000;
+
+    const TRANSPORT_INITIAL_STAGGER_MAX = 2400;
+
 
     const IMPACT_VISIBLE_COUNT = 36;
+
+    const IMPACT_WALL_BOUNCE = 1.08;
+    const IMPACT_COLLISION_BOUNCE = 1.05;
+    const IMPACT_COLLISION_PUSH = 0.56;
+    const IMPACT_COLLISION_RADIUS_SCALE = .82;
+    const IMPACT_MAX_DELTA = 28;
+    const IMPACT_CELL_SIZE = 66;
 
     const ENDING_TOTAL_SERIES = Object.keys(transformFinals).length;
     const ENDING_WAVE_DURATION = 1850;
@@ -1888,9 +1917,20 @@ if(hero && topNav){
                 moveToNode(node.id);
             });
 
+            const core = createSvgElement('circle', {
+                class:`exp-cell-core ${node.playable ? 'is-playable-core' : 'is-filler-core'}`,
+                cx:node.renderX ?? node.x,
+                cy:node.renderY ?? node.y,
+                r:Math.max(5, node.size * .18),
+                'data-node-id':node.id,
+                'data-color':node.color
+            });
+
             node.element = cell;
+            node.coreElement = core;
 
             cellsLayer.appendChild(cell);
+            cellsLayer.appendChild(core);
 
         });
 
@@ -1990,26 +2030,35 @@ if(hero && topNav){
             const isCurrent = node.id === currentNodeId;
             const isAvailable = availableIds.includes(node.id);
 
-            node.element.classList.toggle('is-current', isCurrent);
-            node.element.classList.toggle('is-available', isAvailable);
+            const targets = [
+                node.element,
+                node.coreElement
+            ].filter(Boolean);
 
-            node.element.classList.toggle(
-                'is-transport-current',
-                root.classList.contains('fx-transport') && isCurrent
-            );
+            targets.forEach(element => {
 
-            node.element.classList.toggle(
-                'is-transport-option',
-                root.classList.contains('fx-transport') && isAvailable
-            );
+                element.classList.toggle('is-current', isCurrent);
+                element.classList.toggle('is-available', isAvailable);
 
-            const isMatrix = root.classList.contains('fx-matrix');
-            const isMatrixNode = isMatrix && node.ring > 0;
-            const isMatrixActive = isMatrixNode && node.color === matrixActiveColor;
-            const isMatrixLocked = isMatrixNode && node.color !== matrixActiveColor && !isCurrent;
+                element.classList.toggle(
+                    'is-transport-current',
+                    root.classList.contains('fx-transport') && isCurrent
+                );
 
-            node.element.classList.toggle('is-matrix-active', isMatrixActive);
-            node.element.classList.toggle('is-matrix-locked', isMatrixLocked);
+                element.classList.toggle(
+                    'is-transport-option',
+                    root.classList.contains('fx-transport') && isAvailable
+                );
+
+                const isMatrix = root.classList.contains('fx-matrix');
+                const isMatrixNode = isMatrix && node.ring > 0;
+                const isMatrixActive = isMatrixNode && node.color === matrixActiveColor;
+                const isMatrixLocked = isMatrixNode && node.color !== matrixActiveColor && !isCurrent;
+
+                element.classList.toggle('is-matrix-active', isMatrixActive);
+                element.classList.toggle('is-matrix-locked', isMatrixLocked);
+
+            });
 
         });
 
@@ -2130,11 +2179,11 @@ if(hero && topNav){
             if(!node.element) return;
 
             const ringBaseDelay = node.playable
-                ? node.ring * .22
-                : node.ring * .08;
+                ? node.ring * .14
+                : node.ring * .055;
 
-            const randomDelay = Math.random() * 1.35;
-            const randomDuration = 3.8 + Math.random() * 2.4;
+            const randomDelay = Math.random() * .85;
+            const randomDuration = 2.45 + Math.random() * 1.25;
 
             const nearBase = node.ring === 1
                 ? 1.30
@@ -2211,12 +2260,28 @@ if(hero && topNav){
 
         nodes.forEach(node => {
 
+            clearTransportStateClasses(node);
+
+            node.transportState = null;
+            node.transportVX = 0;
+            node.transportVY = 0;
+            node.transportNextShiftAt = null;
+            node.transportWarningStart = null;
+            node.transportShrinkStart = null;
+
             if(!node.element) return;
 
             node.element.classList.remove(
                 'is-transport-option',
                 'is-transport-current'
             );
+
+            if(node.coreElement){
+                node.coreElement.classList.remove(
+                    'is-transport-option',
+                    'is-transport-current'
+                );
+            }
 
         });
 
@@ -2260,9 +2325,300 @@ if(hero && topNav){
 
     }
 
+    function getTransportBounds(){
+
+        const viewBox = boardSvg
+            .getAttribute('viewBox')
+            .split(' ')
+            .map(Number);
+
+        const [x, y, width, height] = viewBox;
+
+        const margin = 92;
+
+        return {
+            minX:x + margin,
+            maxX:x + width - margin,
+            minY:y + margin,
+            maxY:y + height - margin
+        };
+
+    }
+
+    function getRandomTransportPosition(node, bounds){
+
+        const radius = (node.renderSize ?? TRANSPORT_CELL_SIZE) / 2;
+
+        return {
+            x:rand(bounds.minX + radius, bounds.maxX - radius),
+            y:rand(bounds.minY + radius, bounds.maxY - radius)
+        };
+
+    }
+
+    function getRandomTransportVelocity(){
+
+        const angle = rand(0, Math.PI * 2);
+        const speed = rand(TRANSPORT_SPEED_MIN, TRANSPORT_SPEED_MAX);
+
+        return {
+            vx:Math.cos(angle) * speed,
+            vy:Math.sin(angle) * speed
+        };
+
+    }
+
+    function getDifferentTransportColor(currentColor){
+
+        const options = TRANSPORT_COLORS.filter(color => color !== currentColor);
+
+        return options[Math.floor(rand(0, options.length))] || currentColor;
+
+    }
+
+    function setTransportNodeColor(node, color){
+
+        node.color = color;
+
+        if(node.element){
+            node.element.setAttribute('data-color', color);
+        }
+
+        if(node.coreElement){
+            node.coreElement.setAttribute('data-color', color);
+        }
+
+    }
+
+    function clearTransportStateClasses(node){
+
+        const targets = [
+            node.element,
+            node.coreElement
+        ].filter(Boolean);
+
+        targets.forEach(element => {
+            element.classList.remove(
+                'is-transport-warning',
+                'is-transport-expanded',
+                'is-transport-shrinking'
+            );
+        });
+
+    }
+
+    function setTransportStateClass(node, state){
+
+        clearTransportStateClasses(node);
+
+        const targets = [
+            node.element,
+            node.coreElement
+        ].filter(Boolean);
+
+        targets.forEach(element => {
+
+            if(state === 'warning'){
+                element.classList.add('is-transport-warning');
+            }
+
+            if(state === 'expanded'){
+                element.classList.add('is-transport-expanded');
+            }
+
+            if(state === 'shrinking'){
+                element.classList.add('is-transport-shrinking');
+            }
+
+        });
+
+    }
+
+    function prepareTransportNode(node, bounds){
+
+        if(!node || node.ring === 0) return;
+
+        const position = getRandomTransportPosition(node, bounds);
+        const velocity = getRandomTransportVelocity();
+
+        node.renderX = position.x;
+        node.renderY = position.y;
+        node.renderSize = TRANSPORT_CELL_SIZE;
+
+        node.transportVX = velocity.vx;
+        node.transportVY = velocity.vy;
+
+        node.transportState = 'moving';
+        const now = performance.now();
+
+        node.transportNextShiftAt = now +
+            rand(TRANSPORT_CYCLE_MIN, TRANSPORT_CYCLE_MAX) +
+            rand(0, TRANSPORT_INITIAL_STAGGER_MAX);
+
+        node.transportWarningStart = null;
+        node.transportShrinkStart = null;
+
+        clearTransportStateClasses(node);
+
+    }
+
+    function moveTransportNode(node, delta, bounds){
+
+        let x = node.renderX ?? node.x;
+        let y = node.renderY ?? node.y;
+
+        let vx = node.transportVX ?? 0;
+        let vy = node.transportVY ?? 0;
+
+        x += vx * delta;
+        y += vy * delta;
+
+        const radius = (node.renderSize ?? TRANSPORT_CELL_SIZE) / 2;
+
+        if(x - radius < bounds.minX){
+            x = bounds.minX + radius;
+            vx = Math.abs(vx);
+        }
+
+        if(x + radius > bounds.maxX){
+            x = bounds.maxX - radius;
+            vx = -Math.abs(vx);
+        }
+
+        if(y - radius < bounds.minY){
+            y = bounds.minY + radius;
+            vy = Math.abs(vy);
+        }
+
+        if(y + radius > bounds.maxY){
+            y = bounds.maxY - radius;
+            vy = -Math.abs(vy);
+        }
+
+        node.renderX = x;
+        node.renderY = y;
+
+        node.transportVX = vx;
+        node.transportVY = vy;
+
+    }
+
+    function teleportTransportNode(node, bounds){
+
+        const position = getRandomTransportPosition(node, bounds);
+        const velocity = getRandomTransportVelocity();
+
+        node.renderX = position.x;
+        node.renderY = position.y;
+        node.renderSize = TRANSPORT_EXPANDED_SIZE;
+
+        node.transportVX = velocity.vx;
+        node.transportVY = velocity.vy;
+
+        node.transportState = 'shrinking';
+        node.transportShrinkStart = performance.now();
+
+        setTransportStateClass(node, 'expanded');
+
+    }
+
+    function updateTransportMotion(delta){
+
+        if(!root.classList.contains('fx-transport')) return;
+        if(!transportCandidateIds.length) return;
+
+        const now = performance.now();
+        const bounds = getTransportBounds();
+        const safeDelta = Math.min(delta, TRANSPORT_MAX_DELTA);
+
+        transportCandidateIds.forEach(id => {
+
+            const node = getNode(id);
+
+            if(!node || node.ring === 0) return;
+
+            if(!node.transportState){
+                prepareTransportNode(node, bounds);
+            }
+
+            if(node.transportState === 'moving'){
+
+                moveTransportNode(node, safeDelta, bounds);
+
+                if(now >= node.transportNextShiftAt){
+
+                    node.transportState = 'warning';
+                    node.transportWarningStart = now;
+
+                    node.transportPauseVX = node.transportVX;
+                    node.transportPauseVY = node.transportVY;
+
+                    node.transportVX = 0;
+                    node.transportVY = 0;
+
+                    setTransportStateClass(node, 'warning');
+
+                }
+
+                return;
+
+            }
+
+            if(node.transportState === 'warning'){
+
+                if(now - node.transportWarningStart >= TRANSPORT_WARNING_DURATION){
+                    teleportTransportNode(node, bounds);
+                }
+
+                return;
+
+            }
+
+            if(node.transportState === 'shrinking'){
+
+                moveTransportNode(node, safeDelta, bounds);
+
+                const progress = Math.min(
+                    (now - node.transportShrinkStart) / TRANSPORT_SHRINK_DURATION,
+                    1
+                );
+
+                const eased = 1 - Math.pow(1 - progress, 3);
+
+                node.renderSize = TRANSPORT_EXPANDED_SIZE +
+                    (TRANSPORT_CELL_SIZE - TRANSPORT_EXPANDED_SIZE) * eased;
+
+                if(progress >= 1){
+
+                    node.renderSize = TRANSPORT_CELL_SIZE;
+                    node.transportState = 'moving';
+
+                    node.transportNextShiftAt = now + rand(
+                        TRANSPORT_CYCLE_MIN,
+                        TRANSPORT_CYCLE_MAX
+                    );
+
+                    setTransportStateClass(node, null);
+
+                }else{
+                    setTransportStateClass(node, 'shrinking');
+                }
+
+            }
+
+        });
+
+        updateRenderedNodePositions();
+
+    }
+
     function pickTransportCandidates(){
 
         if(!root.classList.contains('fx-transport')) return;
+
+        clearTransportCandidates();
+
+        const bounds = getTransportBounds();
 
         const candidatePool = nodes.filter(node => {
             if(node.ring === 0) return false;
@@ -2279,13 +2635,55 @@ if(hero && topNav){
             .sort((a, b) => a.value - b.value)
             .map(item => item.node);
 
-        const candidateCount = Math.floor(rand(30, 51));
-
         transportCandidateIds = shuffled
-            .slice(0, candidateCount)
+            .slice(0, TRANSPORT_ACTIVE_COUNT)
             .map(node => node.id);
 
+        transportCandidateIds.forEach(id => {
+
+            const node = getNode(id);
+
+            if(!node) return;
+
+            prepareTransportNode(node, bounds);
+
+        });
+
+        updateRenderedNodePositions();
         updateCells();
+
+    }
+
+    function startTransportMotion(){
+
+        stopTransportMotion();
+
+        transportLastTime = performance.now();
+
+        function animateTransport(now){
+
+            const delta = now - transportLastTime;
+
+            transportLastTime = now;
+
+            updateTransportMotion(delta);
+
+            transportFrame = requestAnimationFrame(animateTransport);
+
+        }
+
+        transportFrame = requestAnimationFrame(animateTransport);
+
+    }
+
+    function stopTransportMotion(){
+
+        if(transportFrame){
+            cancelAnimationFrame(transportFrame);
+            transportFrame = null;
+        }
+
+        transportLastTime = null;
 
     }
 
@@ -2304,7 +2702,7 @@ if(hero && topNav){
         nodes.forEach(node => {
 
             if(!node.playable && node.ring > 0){
-                node.renderSize = 62;
+                node.renderSize = TRANSPORT_CELL_SIZE;
             }else{
                 node.renderSize = node.size;
             }
@@ -2315,7 +2713,7 @@ if(hero && topNav){
 
         /*
             Luego de una pausa breve, desaparece la estructura
-            y empiezan las apariciones aleatorias.
+            y comienza el sistema de traslado.
         */
         transportPrepareTimer = setTimeout(() => {
 
@@ -2323,16 +2721,15 @@ if(hero && topNav){
             root.classList.add('is-transport-ready');
 
             pickTransportCandidates();
-
-            transportTimer = setInterval(() => {
-                pickTransportCandidates();
-            }, 1500);
+            startTransportMotion();
 
         }, 850);
 
     }
 
     function stopTransportEffect(){
+
+        stopTransportMotion();
 
         if(transportTimer){
             clearInterval(transportTimer);
@@ -2344,23 +2741,48 @@ if(hero && topNav){
             transportPrepareTimer = null;
         }
 
+        if(transportLandingTimer){
+            clearTimeout(transportLandingTimer);
+            transportLandingTimer = null;
+        }
+
         root.classList.remove(
             'is-transport-preparing',
-            'is-transport-ready'
+            'is-transport-ready',
+            'is-transport-landing'
         );
 
         transportCandidateIds = [];
 
         nodes.forEach(node => {
 
+            node.renderX = node.baseX ?? node.x;
+            node.renderY = node.baseY ?? node.y;
             node.renderSize = node.size;
 
-            if(node.element){
-                node.element.classList.remove(
+            node.transportState = null;
+            node.transportVX = 0;
+            node.transportVY = 0;
+            node.transportNextShiftAt = null;
+            node.transportWarningStart = null;
+            node.transportShrinkStart = null;
+
+            clearTransportStateClasses(node);
+
+            const targets = [
+                node.element,
+                node.coreElement
+            ].filter(Boolean);
+
+            targets.forEach(element => {
+                element.classList.remove(
                     'is-transport-option',
-                    'is-transport-current'
+                    'is-transport-current',
+                    'is-transport-warning',
+                    'is-transport-expanded',
+                    'is-transport-shrinking'
                 );
-            }
+            });
 
         });
 
@@ -2413,19 +2835,49 @@ if(hero && topNav){
         };
     }
 
+    function getBlackholeNodeSpeed(node){
+
+        if(node.playable && BLACKHOLE_ACTIVE_RINGS.includes(node.ring)){
+            return BLACKHOLE_RING_SPEED[node.ring] || 0;
+        }
+
+        if(!node.playable && node.ring > 0){
+
+            const direction = node.ring % 2 === 0 ? -1 : 1;
+
+            const depth = Math.max(
+                0,
+                node.ring - PLAYABLE_RING_LIMIT
+            );
+
+            const attenuation = Math.max(
+                .34,
+                1 - depth * .045
+            );
+
+            return direction * BLACKHOLE_FILLER_SPEED * attenuation;
+
+        }
+
+        return 0;
+
+    }
+
     function updateBlackholeNodePositions(delta = 16){
 
         const center = getBoardCenter();
 
         nodes.forEach(node => {
 
-            if(!node.playable || !BLACKHOLE_ACTIVE_RINGS.includes(node.ring)){
+            const speed = getBlackholeNodeSpeed(node);
+
+            if(!speed){
                 node.renderX = node.baseX ?? node.x;
                 node.renderY = node.baseY ?? node.y;
                 return;
             }
 
-            node.renderAngle += BLACKHOLE_RING_SPEED[node.ring] * delta;
+            node.renderAngle += speed * delta;
 
             const radius = node.radius;
 
@@ -2440,9 +2892,19 @@ if(hero && topNav){
 
         nodes.forEach(node => {
 
-            if(!node.element) return;
+            if(node.element){
+                node.element.setAttribute('points', getCellPoints(node));
+            }
 
-            node.element.setAttribute('points', getCellPoints(node));
+            if(node.coreElement){
+                const x = node.renderX ?? node.x;
+                const y = node.renderY ?? node.y;
+                const visualSize = node.renderSize ?? node.size;
+
+                node.coreElement.setAttribute('cx', x);
+                node.coreElement.setAttribute('cy', y);
+                node.coreElement.setAttribute('r', Math.max(5, visualSize * .18));
+            }
 
         });
 
@@ -2501,10 +2963,16 @@ if(hero && topNav){
             );
 
             /*
-                Area de revelado. Mayor n° variable > mayor área de revelado.
+                Área de revelado.
+                En Fantasma se amplía ligeramente para descubrir más casillas.
             */
             const cellRadius = node.size * .56;
-            const revealMargin = node.playable ? 72 : 62;
+
+            const isGhost = root.classList.contains('fx-ghost');
+
+            const revealMargin = isGhost
+                ? node.playable ? 108 : 94
+                : node.playable ? 72 : 62;
 
             const nearCursor = distance < cellRadius + revealMargin;
 
@@ -2743,6 +3211,121 @@ if(hero && topNav){
 
     }
 
+    function getEndingMappedRouteData(){
+
+        const rawPoints = [];
+
+        routeHistory.forEach(step => {
+            rawPoints.push({ x:step.fromX, y:step.fromY });
+            rawPoints.push({ x:step.toX, y:step.toY });
+        });
+
+        if(!rawPoints.length){
+            const currentNode = getNode(currentNodeId);
+
+            if(currentNode){
+                const currentPosition = getEndingNodePosition(currentNode);
+
+                rawPoints.push({
+                    x:currentPosition.x,
+                    y:currentPosition.y
+                });
+            }
+        }
+
+        if(!rawPoints.length){
+            return {
+                segments:[],
+                points:[]
+            };
+        }
+
+        let minX = Math.min(...rawPoints.map(point => point.x));
+        let maxX = Math.max(...rawPoints.map(point => point.x));
+        let minY = Math.min(...rawPoints.map(point => point.y));
+        let maxY = Math.max(...rawPoints.map(point => point.y));
+
+        if(Math.abs(maxX - minX) < 1){
+            minX -= 1;
+            maxX += 1;
+        }
+
+        if(Math.abs(maxY - minY) < 1){
+            minY -= 1;
+            maxY += 1;
+        }
+
+        const viewSize = 1000;
+        const padding = 110;
+        const availableSize = viewSize - padding * 2;
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        const scale = Math.min(
+            availableSize / width,
+            availableSize / height
+        );
+
+        const offsetX = (viewSize - width * scale) / 2;
+        const offsetY = (viewSize - height * scale) / 2;
+
+        function mapPoint(x, y){
+            return {
+                x:Math.round(offsetX + (x - minX) * scale),
+                y:Math.round(offsetY + (y - minY) * scale)
+            };
+        }
+
+        const segments = routeHistory.map(step => {
+
+            const start = mapPoint(step.fromX, step.fromY);
+            const end = mapPoint(step.toX, step.toY);
+
+            return [
+                start.x,
+                start.y,
+                end.x,
+                end.y
+            ];
+
+        });
+
+        const points = [];
+        const pointKeys = new Set();
+
+        segments.forEach(segment => {
+
+            const segmentPoints = [
+                { x:segment[0], y:segment[1] },
+                { x:segment[2], y:segment[3] }
+            ];
+
+            segmentPoints.forEach(point => {
+
+                const key = `${point.x},${point.y}`;
+
+                if(pointKeys.has(key)) return;
+
+                pointKeys.add(key);
+                points.push(point);
+
+            });
+
+        });
+
+        if(!segments.length && rawPoints[0]){
+            const singlePoint = mapPoint(rawPoints[0].x, rawPoints[0].y);
+            points.push(singlePoint);
+        }
+
+        return {
+            segments,
+            points
+        };
+
+    }
+
     function encodePointValue(value){
 
         const safeValue = Math.max(
@@ -2769,6 +3352,21 @@ if(hero && topNav){
 
     }
 
+    function encodeResultSegments(segments){
+
+        return segments
+            .map(segment => {
+                return [
+                    encodePointValue(segment[0]),
+                    encodePointValue(segment[1]),
+                    encodePointValue(segment[2]),
+                    encodePointValue(segment[3])
+                ].join('');
+            })
+            .join('');
+
+    }
+
     function getResultColorKey(){
 
         const colorKeys = {
@@ -2788,9 +3386,16 @@ if(hero && topNav){
 
         const colorKey = getResultColorKey();
         const points = getEndingMappedPoints();
+
         const encodedPoints = encodeResultPoints(points);
 
-        url.hash = `r=${colorKey}.${encodedPoints}`;
+        url.search = '';
+        url.hash = '';
+
+        url.searchParams.set(
+            'r',
+            `${colorKey}.${encodedPoints}`
+        );
 
         return url.toString();
 
@@ -2850,79 +3455,31 @@ if(hero && topNav){
         endingNodesLayer.innerHTML = '';
 
         const routeColor = selectedPlayerColor || '#008FB8';
-
-        const points = [];
-
-        routeHistory.forEach(step => {
-            points.push({ x:step.fromX, y:step.fromY });
-            points.push({ x:step.toX, y:step.toY });
-        });
-
-        if(!points.length){
-            const currentNode = getNode(currentNodeId);
-
-            if(currentNode){
-                const currentPosition = getEndingNodePosition(currentNode);
-
-                points.push({
-                    x:currentPosition.x,
-                    y:currentPosition.y
-                });
-            }
-        }
+        const points = getEndingMappedPoints();
 
         if(!points.length) return;
 
-        let minX = Math.min(...points.map(point => point.x));
-        let maxX = Math.max(...points.map(point => point.x));
-        let minY = Math.min(...points.map(point => point.y));
-        let maxY = Math.max(...points.map(point => point.y));
+        const segments = points.slice(0, -1).map((point, index) => {
 
-        if(Math.abs(maxX - minX) < 1){
-            minX -= 1;
-            maxX += 1;
-        }
-
-        if(Math.abs(maxY - minY) < 1){
-            minY -= 1;
-            maxY += 1;
-        }
-
-        const viewSize = 1000;
-        const padding = 110;
-        const availableSize = viewSize - padding * 2;
-
-        const width = maxX - minX;
-        const height = maxY - minY;
-
-        const scale = Math.min(
-            availableSize / width,
-            availableSize / height
-        );
-
-        const offsetX = (viewSize - width * scale) / 2;
-        const offsetY = (viewSize - height * scale) / 2;
-
-        function mapPoint(x, y){
+            const nextPoint = points[index + 1];
 
             return {
-                x:offsetX + (x - minX) * scale,
-                y:offsetY + (y - minY) * scale
+                x1:point.x,
+                y1:point.y,
+                x2:nextPoint.x,
+                y2:nextPoint.y
             };
 
-        }
+        });
 
-        routeHistory.forEach((step, index) => {
-
-            const start = mapPoint(step.fromX, step.fromY);
-            const end = mapPoint(step.toX, step.toY);
+        segments.forEach((segment, index) => {
 
             const ghostLine = createSvgElement('line', {
                 class:'exp-ending-route exp-ending-route--ghost',
-                x1:start.x,
-                y1:start.y,
-                x2:end.x,
-                y2:end.y,
+                x1:segment.x1,
+                y1:segment.y1,
+                x2:segment.x2,
+                y2:segment.y2,
                 stroke:routeColor,
                 'stroke-width':14
             });
@@ -2931,10 +3488,10 @@ if(hero && topNav){
 
             const line = createSvgElement('line', {
                 class:'exp-ending-route',
-                x1:start.x,
-                y1:start.y,
-                x2:end.x,
-                y2:end.y,
+                x1:segment.x1,
+                y1:segment.y1,
+                x2:segment.x2,
+                y2:segment.y2,
                 stroke:routeColor,
                 'stroke-width':5
             });
@@ -2949,56 +3506,17 @@ if(hero && topNav){
 
         });
 
-        const endpointPoints = [];
-
-        if(routeHistory.length){
-
-            routeHistory.forEach((step, index) => {
-
-                endpointPoints.push({
-                    x:step.fromX,
-                    y:step.fromY,
-                    order:index * 2,
-                    kind:index === 0 ? 'start' : 'middle'
-                });
-
-                endpointPoints.push({
-                    x:step.toX,
-                    y:step.toY,
-                    order:index * 2 + 1,
-                    kind:index === routeHistory.length - 1 ? 'end' : 'middle'
-                });
-
-            });
-
-        }else if(points[0]){
-
-            endpointPoints.push({
-                x:points[0].x,
-                y:points[0].y,
-                order:0,
-                kind:'end'
-            });
-
-        }
-
-        endpointPoints.forEach(point => {
-
-            const mapped = mapPoint(point.x, point.y);
-
-            const radius = point.kind === 'start' || point.kind === 'end'
-                ? 10
-                : 6;
+        points.forEach((point, index) => {
 
             const circle = createSvgElement('circle', {
-                class:`exp-ending-point exp-ending-point-core exp-ending-point--${point.kind}`,
-                cx:mapped.x,
-                cy:mapped.y,
-                r:radius,
+                class:'exp-ending-point exp-ending-point-core exp-ending-point--middle',
+                cx:point.x,
+                cy:point.y,
+                r:8,
                 stroke:routeColor
             });
 
-            circle.style.animationDelay = `${180 + point.order * 22}ms`;
+            circle.style.animationDelay = `${180 + index * 22}ms`;
 
             endingNodesLayer.appendChild(circle);
 
@@ -3532,9 +4050,19 @@ if(hero && topNav){
 
         nodes.forEach(node => {
 
-            if(!node.element) return;
+            const x = node.renderX ?? node.x;
+            const y = node.renderY ?? node.y;
+            const visualSize = node.renderSize ?? node.size;
 
-            node.element.setAttribute('points', getCellPoints(node));
+            if(node.element){
+                node.element.setAttribute('points', getCellPoints(node));
+            }
+
+            if(node.coreElement){
+                node.coreElement.setAttribute('cx', x);
+                node.coreElement.setAttribute('cy', y);
+                node.coreElement.setAttribute('r', Math.max(5, visualSize * .18));
+            }
 
         });
 
@@ -3701,13 +4229,11 @@ if(hero && topNav){
             const targetX = rand(bounds.minX, bounds.maxX);
             const targetY = rand(bounds.minY, bounds.maxY);
 
-            const targetSize = node.playable
-                ? Math.max(node.size, 74)
-                : Math.max(node.size, 52);
+            const targetSize = IMPACT_CELL_SIZE;
 
             node.impactStartX = startX;
             node.impactStartY = startY;
-            node.impactStartSize = node.size;
+            node.impactStartSize = targetSize;
 
             node.impactTargetX = targetX;
             node.impactTargetY = targetY;
@@ -3715,13 +4241,13 @@ if(hero && topNav){
 
             node.renderX = startX;
             node.renderY = startY;
-            node.renderSize = node.size;
+            node.renderSize = targetSize;
 
             const angle = rand(0, Math.PI * 2);
 
             const speed = node.playable
-                ? rand(.18, .34)
-                : rand(.10, .22);
+                ? rand(.24, .46)
+                : rand(.14, .32);
 
             node.impactVX = Math.cos(angle) * speed;
             node.impactVY = Math.sin(angle) * speed;
@@ -3733,9 +4259,138 @@ if(hero && topNav){
 
     }
 
+    function limitImpactVelocity(node){
+
+        let vx = node.impactVX ?? 0;
+        let vy = node.impactVY ?? 0;
+
+        const speed = Math.hypot(vx, vy);
+
+        const maxSpeed = node.playable ? .48 : .34;
+        const minSpeed = node.playable ? .16 : .09;
+
+        if(speed > maxSpeed){
+            vx = (vx / speed) * maxSpeed;
+            vy = (vy / speed) * maxSpeed;
+        }
+
+        if(speed < minSpeed){
+            const angle = rand(0, Math.PI * 2);
+
+            vx = Math.cos(angle) * minSpeed;
+            vy = Math.sin(angle) * minSpeed;
+        }
+
+        node.impactVX = vx;
+        node.impactVY = vy;
+
+    }
+
+    function resolveImpactCollisions(bounds){
+
+        const activeNodes = impactNodeIds
+            .map(id => getNode(id))
+            .filter(node => {
+                return (
+                    node &&
+                    node.ring > 0 &&
+                    node.renderX != null &&
+                    node.renderY != null
+                );
+            });
+
+        for(let i = 0; i < activeNodes.length; i++){
+
+            const nodeA = activeNodes[i];
+
+            for(let j = i + 1; j < activeNodes.length; j++){
+
+                const nodeB = activeNodes[j];
+
+                const ax = nodeA.renderX ?? nodeA.x;
+                const ay = nodeA.renderY ?? nodeA.y;
+                const bx = nodeB.renderX ?? nodeB.x;
+                const by = nodeB.renderY ?? nodeB.y;
+
+                const dx = bx - ax;
+                const dy = by - ay;
+
+                const distance = Math.hypot(dx, dy);
+
+                if(distance <= 0) continue;
+
+                const radiusA = ((nodeA.renderSize ?? nodeA.size) / 2) * IMPACT_COLLISION_RADIUS_SCALE;
+                const radiusB = ((nodeB.renderSize ?? nodeB.size) / 2) * IMPACT_COLLISION_RADIUS_SCALE;
+
+                const minDistance = radiusA + radiusB;
+
+                if(distance >= minDistance) continue;
+
+                const nx = dx / distance;
+                const ny = dy / distance;
+
+                const overlap = minDistance - distance;
+                const push = overlap * IMPACT_COLLISION_PUSH;
+
+                nodeA.renderX -= nx * push * .5;
+                nodeA.renderY -= ny * push * .5;
+
+                nodeB.renderX += nx * push * .5;
+                nodeB.renderY += ny * push * .5;
+
+                const avx = nodeA.impactVX ?? 0;
+                const avy = nodeA.impactVY ?? 0;
+                const bvx = nodeB.impactVX ?? 0;
+                const bvy = nodeB.impactVY ?? 0;
+
+                const aNormal = avx * nx + avy * ny;
+                const bNormal = bvx * nx + bvy * ny;
+
+                const aTangentX = avx - aNormal * nx;
+                const aTangentY = avy - aNormal * ny;
+
+                const bTangentX = bvx - bNormal * nx;
+                const bTangentY = bvy - bNormal * ny;
+
+                nodeA.impactVX = aTangentX + bNormal * nx * IMPACT_COLLISION_BOUNCE;
+                nodeA.impactVY = aTangentY + bNormal * ny * IMPACT_COLLISION_BOUNCE;
+
+                nodeB.impactVX = bTangentX + aNormal * nx * IMPACT_COLLISION_BOUNCE;
+                nodeB.impactVY = bTangentY + aNormal * ny * IMPACT_COLLISION_BOUNCE;
+
+                limitImpactVelocity(nodeA);
+                limitImpactVelocity(nodeB);
+
+            }
+
+        }
+
+        activeNodes.forEach(node => {
+
+            const radius = (node.renderSize ?? node.size) / 2;
+
+            node.renderX = clamp(
+                node.renderX,
+                bounds.minX + radius,
+                bounds.maxX - radius
+            );
+
+            node.renderY = clamp(
+                node.renderY,
+                bounds.minY + radius,
+                bounds.maxY - radius
+            );
+
+            limitImpactVelocity(node);
+
+        });
+
+    }
+
     function updateImpactMotion(delta){
 
         const bounds = getImpactBounds();
+        const safeDelta = Math.min(delta, IMPACT_MAX_DELTA);
 
         nodes.forEach(node => {
 
@@ -3748,51 +4403,33 @@ if(hero && topNav){
             let vx = node.impactVX ?? 0;
             let vy = node.impactVY ?? 0;
 
-            x += vx * delta;
-            y += vy * delta;
+            x += vx * safeDelta;
+            y += vy * safeDelta;
 
             const radius = (node.renderSize ?? node.size) / 2;
 
             if(x - radius < bounds.minX){
                 x = bounds.minX + radius;
-                vx = Math.abs(vx);
+                vx = Math.abs(vx) * IMPACT_WALL_BOUNCE;
             }
 
             if(x + radius > bounds.maxX){
                 x = bounds.maxX - radius;
-                vx = -Math.abs(vx);
+                vx = -Math.abs(vx) * IMPACT_WALL_BOUNCE;
             }
 
             if(y - radius < bounds.minY){
                 y = bounds.minY + radius;
-                vy = Math.abs(vy);
+                vy = Math.abs(vy) * IMPACT_WALL_BOUNCE;
             }
 
             if(y + radius > bounds.maxY){
                 y = bounds.maxY - radius;
-                vy = -Math.abs(vy);
+                vy = -Math.abs(vy) * IMPACT_WALL_BOUNCE;
             }
 
-            /*
-                Pequeña variación para que no sea un rebote mecánico.
-            */
-            vx += rand(-.006, .006);
-            vy += rand(-.006, .006);
-
-            const speed = Math.hypot(vx, vy);
-            const maxSpeed = node.playable ? .34 : .22;
-            const minSpeed = node.playable ? .11 : .06;
-
-            if(speed > maxSpeed){
-                vx = (vx / speed) * maxSpeed;
-                vy = (vy / speed) * maxSpeed;
-            }
-
-            if(speed < minSpeed){
-                const angle = rand(0, Math.PI * 2);
-                vx = Math.cos(angle) * minSpeed;
-                vy = Math.sin(angle) * minSpeed;
-            }
+            vx += rand(-.012, .012);
+            vy += rand(-.012, .012);
 
             node.renderX = x;
             node.renderY = y;
@@ -3800,7 +4437,11 @@ if(hero && topNav){
             node.impactVX = vx;
             node.impactVY = vy;
 
+            limitImpactVelocity(node);
+
         });
+
+        resolveImpactCollisions(bounds);
 
         updateImpactGeometry();
 
