@@ -3,10 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Lectura de recorridos</title>
+<title>Esta es tu ruta</title>
 <style>
     :root{
-        --bg:#f4d61f;
+        --bg:#ECECEC;
+        --result-bg:
+            radial-gradient(circle at 14% 18%, rgba(255,221,14,.48), transparent 34%),
+            radial-gradient(circle at 86% 18%, rgba(214,36,22,.20), transparent 36%),
+            radial-gradient(circle at 16% 86%, rgba(0,143,184,.24), transparent 38%),
+            radial-gradient(circle at 84% 84%, rgba(106,170,44,.28), transparent 38%),
+            #ECECEC;
         --paper:#ece8dc;
         --ink:#1f2025;
         --muted:#66625b;
@@ -28,7 +34,8 @@
         padding:0;
         min-height:100%;
         font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background:var(--bg);
+        background:var(--result-bg);
+        background-attachment:fixed;
         color:var(--ink);
     }
 
@@ -81,6 +88,7 @@
         font-size:clamp(2.25rem, 7vw, 3.3rem);
         line-height:.9;
         letter-spacing:-.04em;
+        color:var(--ink);
     }
 
     .result-bar{
@@ -158,6 +166,29 @@
         font-size:.65rem;
         font-weight:600;
         line-height:1.35;
+    }
+
+    .result-main{
+        display:block;
+    }
+
+    .result-author{
+        display:block;
+        margin-top:1px;
+        font-size:.68rem;
+        font-weight:500;
+        text-transform:none;
+    }
+
+    .result-thanks{
+        display:block;
+        margin-top:6px;
+        color:rgba(31,32,37,.58);
+        font-size:.66rem;
+        font-weight:500;
+        font-style:italic;
+        line-height:1.35;
+        text-transform:none;
     }
 
     .result-export-panel{
@@ -244,23 +275,45 @@
         <header class="result-header">
             <div class="result-badge" aria-hidden="true">
                 <svg viewBox="0 0 64 64">
-                    <polygon points="32,4 41,13 53,11 55,23 64,32 55,41 53,53 41,51 32,60 23,51 11,53 9,41 0,32 9,23 11,11 23,13"
-                             fill="#f2d51d"/>
-                    <polygon points="32,11 38,17 47,16 48,25 54,32 48,39 47,48 38,47 32,53 26,47 17,48 16,39 10,32 16,25 17,16 26,17"
-                             fill="none" stroke="#ffffff" stroke-width="2"/>
-                    <circle cx="32" cy="32" r="10" fill="#dcd9cf" stroke="#ffffff" stroke-width="3"/>
+                    <polygon
+                        points="56.9,42.3 42.3,56.9 21.7,56.9 7.1,42.3 7.1,21.7 21.7,7.1 42.3,7.1 56.9,21.7"
+                        fill="#f2d51d"
+                    />
+
+                    <polygon
+                        points="32,10 36.2,24.2 46.8,17.2 39.8,27.8 54,32 39.8,36.2 46.8,46.8 36.2,39.8 32,54 27.8,39.8 17.2,46.8 24.2,36.2 10,32 24.2,27.8 17.2,17.2 27.8,24.2"
+                        fill="#ffffff"
+                    />
+
+                    <circle
+                        cx="32"
+                        cy="32"
+                        r="5.8"
+                        fill="#f2d51d"
+                    />
                 </svg>
             </div>
 
-            <h1 class="result-title">Lectura<br>de recorridos</h1>
+            <h1 class="result-title">Esta es<br>tu ruta</h1>
 
             <div class="result-badge" aria-hidden="true">
                 <svg viewBox="0 0 64 64">
-                    <polygon points="32,4 41,13 53,11 55,23 64,32 55,41 53,53 41,51 32,60 23,51 11,53 9,41 0,32 9,23 11,11 23,13"
-                             fill="#f2d51d"/>
-                    <polygon points="32,11 38,17 47,16 48,25 54,32 48,39 47,48 38,47 32,53 26,47 17,48 16,39 10,32 16,25 17,16 26,17"
-                             fill="none" stroke="#ffffff" stroke-width="2"/>
-                    <circle cx="32" cy="32" r="10" fill="#dcd9cf" stroke="#ffffff" stroke-width="3"/>
+                    <polygon
+                        points="56.9,42.3 42.3,56.9 21.7,56.9 7.1,42.3 7.1,21.7 21.7,7.1 42.3,7.1 56.9,21.7"
+                        fill="#f2d51d"
+                    />
+
+                    <polygon
+                        points="32,10 36.2,24.2 46.8,17.2 39.8,27.8 54,32 39.8,36.2 46.8,46.8 36.2,39.8 32,54 27.8,39.8 17.2,46.8 24.2,36.2 10,32 24.2,27.8 17.2,17.2 27.8,24.2"
+                        fill="#ffffff"
+                    />
+
+                    <circle
+                        cx="32"
+                        cy="32"
+                        r="5.8"
+                        fill="#f2d51d"
+                    />
                 </svg>
             </div>
         </header>
@@ -286,7 +339,18 @@
         <section class="result-bar" id="resultBarBottom" aria-hidden="true"></section>
 
         <footer class="result-footer">
-            Interfaz digital - Juego “Enrútate”
+            <span class="result-main">
+                Interfaz digital - Juego “Enrútate”
+            </span>
+
+            <span class="result-author">
+                Desarrollado por Fabián Flores Estay.
+            </span>
+
+            <em class="result-thanks">
+                Gracias por recorrer y probar esta Interfaz Expresiva.
+            </em>
+
             <small>
                 Taller de diseño de interacción 2026<br>
                 Escuela de Arquitectura y Diseño<br>
@@ -347,18 +411,22 @@
         wrap.className = 'result-cell-chip';
 
         const colors = COLOR_MAP[color] || COLOR_MAP.blue;
+        const centerColor = 'transparent';
+
+        const octagonPoints = '52.2,39.2 39.2,52.2 20.8,52.2 7.8,39.2 7.8,20.8 20.8,7.8 39.2,7.8 52.2,20.8';
+        const starPoints = '30.0,6.0 35.7,16.3 47.0,13.0 43.7,24.3 54.0,30.0 43.7,35.7 47.0,47.0 35.7,43.7 30.0,54.0 24.3,43.7 13.0,47.0 16.3,35.7 6.0,30.0 16.3,24.3 13.0,13.0 24.3,16.3';
+
+        const shape = color === 'red'
+            ? `<polygon points="${starPoints}" fill="${colors.fill}"></polygon>`
+            : `<polygon points="${octagonPoints}" fill="${colors.fill}"></polygon>`;
 
         wrap.innerHTML = `
             <svg viewBox="0 0 60 60" aria-hidden="true">
-                <polygon
-                    points="30,6 43,11 54,22 54,38 43,49 30,54 17,49 6,38 6,22 17,11"
-                    fill="${colors.fill}"
-                    stroke="${colors.stroke}"
-                    stroke-width="3"
-                ></polygon>
-                <circle cx="30" cy="30" r="8.5" fill="#1f2025"></circle>
+                ${shape}
+                <circle cx="30" cy="30" r="8.5" fill="${centerColor}"></circle>
             </svg>
         `;
+
         return wrap;
     }
 
@@ -410,7 +478,7 @@
 
     }
 
-    function drawOctagon(ctx, cx, cy, r, fill, stroke){
+    function drawOctagon(ctx, cx, cy, r, fill){
 
         ctx.beginPath();
 
@@ -433,14 +501,54 @@
         ctx.fillStyle = fill;
         ctx.fill();
 
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = stroke;
-        ctx.stroke();
+        ctx.save();
 
         ctx.beginPath();
-        ctx.arc(cx, cy, r * .36, 0, Math.PI * 2);
-        ctx.fillStyle = '#1f2025';
+        ctx.arc(cx, cy, r * .34, 0, Math.PI * 2);
+        ctx.clip();
+
+        paintResultBackground(ctx);
+
+        ctx.restore();
+
+    }
+
+    function drawStarCell(ctx, cx, cy, outerR, fill){
+
+        const innerR = outerR * .62;
+
+        ctx.beginPath();
+
+        for(let i = 0; i < 16; i++){
+
+            const angle = -Math.PI / 2 + (Math.PI / 8) * i;
+            const r = i % 2 === 0 ? outerR : innerR;
+
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+
+            if(i === 0){
+                ctx.moveTo(x, y);
+            }else{
+                ctx.lineTo(x, y);
+            }
+
+        }
+
+        ctx.closePath();
+
+        ctx.fillStyle = fill;
         ctx.fill();
+
+        ctx.save();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR * .30, 0, Math.PI * 2);
+        ctx.clip();
+
+        paintResultBackground(ctx);
+
+        ctx.restore();
 
     }
 
@@ -456,7 +564,11 @@
             const cx = x + index * (size + gap) + size / 2;
             const cy = y + size / 2;
 
-            drawOctagon(ctx, cx, cy, size * .43, colors.fill, colors.stroke);
+            if(color === 'red'){
+                drawStarCell(ctx, cx, cy, size * .43, colors.fill);
+            }else{
+                drawOctagon(ctx, cx, cy, size * .43, colors.fill);
+            }
 
         });
 
@@ -597,72 +709,118 @@
 
     }
 
+    function paintResultBackground(ctx){
+
+        const W = ctx.canvas.width;
+        const H = ctx.canvas.height;
+
+        ctx.fillStyle = '#ECECEC';
+        ctx.fillRect(0, 0, W, H);
+
+        const yellow = ctx.createRadialGradient(W * .14, H * .16, 0, W * .14, H * .16, W * .48);
+        yellow.addColorStop(0, 'rgba(255,221,14,.48)');
+        yellow.addColorStop(1, 'rgba(255,221,14,0)');
+
+        ctx.fillStyle = yellow;
+        ctx.fillRect(0, 0, W, H);
+
+        const red = ctx.createRadialGradient(W * .88, H * .16, 0, W * .88, H * .16, W * .48);
+        red.addColorStop(0, 'rgba(214,36,22,.20)');
+        red.addColorStop(1, 'rgba(214,36,22,0)');
+
+        ctx.fillStyle = red;
+        ctx.fillRect(0, 0, W, H);
+
+        const blue = ctx.createRadialGradient(W * .16, H * .86, 0, W * .16, H * .86, W * .52);
+        blue.addColorStop(0, 'rgba(0,143,184,.24)');
+        blue.addColorStop(1, 'rgba(0,143,184,0)');
+
+        ctx.fillStyle = blue;
+        ctx.fillRect(0, 0, W, H);
+
+        const green = ctx.createRadialGradient(W * .84, H * .84, 0, W * .84, H * .84, W * .52);
+        green.addColorStop(0, 'rgba(106,170,44,.28)');
+        green.addColorStop(1, 'rgba(106,170,44,0)');
+
+        ctx.fillStyle = green;
+        ctx.fillRect(0, 0, W, H);
+
+    }
+
     function generateResultPng(data){
 
-    if(!exportImage || !saveButton || !exportPanel) return;
-    if(!data) return;
+        if(!exportImage || !saveButton || !exportPanel) return;
+        if(!data) return;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
 
-    const W = 860;
-    const H = 1600;
+        const W = 860;
+        const H = 1600;
 
-    canvas.width = W;
-    canvas.height = H;
+        canvas.width = W;
+        canvas.height = H;
 
-    ctx.fillStyle = '#f4d61f';
-    ctx.fillRect(0, 0, W, H);
+        paintResultBackground(ctx);
 
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#1f2025';
-    ctx.font = '900 82px system-ui, sans-serif';
-    ctx.fillText('Lectura', W / 2, 120);
-    ctx.fillText('de recorridos', W / 2, 202);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1f2025';
+        ctx.font = '900 82px system-ui, sans-serif';
+        ctx.fillText('Esta es', W / 2, 120);
+        ctx.fillText('tu ruta', W / 2, 202);
 
-    drawCellBar(ctx, 28, 252, W - 56);
+        drawCellBar(ctx, 28, 252, W - 56);
 
-    ctx.fillStyle = '#ece8dc';
-    drawRoundedRect(ctx, 54, 350, W - 108, 590, 72);
+        ctx.fillStyle = '#ece8dc';
+        drawRoundedRect(ctx, 54, 350, W - 108, 590, 72);
 
-    drawResultRoute(ctx, data, 108, 410, W - 216, 470);
+        drawResultRoute(ctx, data, 108, 410, W - 216, 470);
 
-    ctx.fillStyle = '#ece8dc';
-    drawRoundedRect(ctx, 94, 980, W - 188, 220, 42);
+        ctx.fillStyle = '#ece8dc';
+        drawRoundedRect(ctx, 94, 980, W - 188, 220, 42);
 
-    ctx.fillStyle = '#1f2025';
-    ctx.textAlign = 'center';
-    ctx.font = '700 30px system-ui, sans-serif';
+        ctx.fillStyle = '#1f2025';
+        ctx.textAlign = 'center';
+        ctx.font = '700 30px system-ui, sans-serif';
 
-    drawMultilineText(
-        ctx,
-        'Los puntos marcan las casillas donde el recorrido comienza o termina; las líneas reúnen los caminos seguidos durante la lectura del tablero.',
-        W / 2,
-        1050,
-        W - 270,
-        38
-    );
+        drawMultilineText(
+            ctx,
+            'Los puntos marcan las casillas donde el recorrido comienza o termina; las líneas reúnen los caminos seguidos durante la lectura del tablero.',
+            W / 2,
+            1050,
+            W - 270,
+            38
+        );
 
-    drawCellBar(ctx, 28, 1260, W - 56);
+        drawCellBar(ctx, 28, 1260, W - 56);
 
-    ctx.fillStyle = '#1f2025';
-    ctx.font = '900 22px system-ui, sans-serif';
-    ctx.fillText('INTERFAZ DIGITAL - JUEGO “ENRÚTATE”', W / 2, 1395);
+        ctx.fillStyle = '#1f2025';
+        ctx.font = '900 22px system-ui, sans-serif';
+        ctx.fillText('INTERFAZ DIGITAL - JUEGO “ENRÚTATE”', W / 2, 1388);
 
-    ctx.font = '700 17px system-ui, sans-serif';
-    ctx.fillText('TALLER DE DISEÑO DE INTERACCIÓN 2026', W / 2, 1440);
-    ctx.fillText('ESCUELA DE ARQUITECTURA Y DISEÑO', W / 2, 1466);
-    ctx.fillText('PONTIFICIA UNIVERSIDAD CATÓLICA DE VALPARAÍSO', W / 2, 1492);
+        ctx.font = '500 18px system-ui, sans-serif';
+        ctx.fillText('Desarrollado por Fabián Flores Estay.', W / 2, 1416);
 
-    const imageData = canvas.toDataURL('image/png');
+        ctx.save();75
+        ctx.globalAlpha = .58;
+        ctx.font = 'italic 500 18px system-ui, sans-serif';
+        ctx.fillText('Gracias por recorrer y probar esta Interfaz Expresiva.', W / 2, 1454);
+        ctx.restore();
 
-    exportImage.src = imageData;
-    saveButton.href = imageData;
+        ctx.font = '700 15px system-ui, sans-serif';
+        ctx.fillText('TALLER DE DISEÑO DE INTERACCIÓN 2026', W / 2, 1502);
+        ctx.fillText('ESCUELA DE ARQUITECTURA Y DISEÑO', W / 2, 1526);
+        ctx.fillText('PONTIFICIA UNIVERSIDAD CATÓLICA DE VALPARAÍSO', W / 2, 1550);
 
-    exportPanel.hidden = false;
-    document.body.classList.add('is-image-ready');
+        const imageData = canvas.toDataURL('image/png');
 
-}
+        exportImage.src = imageData;
+        saveButton.href = imageData;
+
+        exportPanel.hidden = false;
+        document.body.classList.add('is-image-ready');
+
+    }
     
     function fillBars(){
         BAR_PATTERN.forEach(color => {

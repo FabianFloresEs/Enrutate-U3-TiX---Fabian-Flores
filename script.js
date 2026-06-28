@@ -1408,6 +1408,7 @@ if(hero && topNav){
     let transportTimer = null;
     let transportPrepareTimer = null;
     let transportLandingTimer = null;
+    let transportResetTimer = null;
     let transportFrame = null;
     let transportLastTime = null;
     let transportCandidateIds = [];
@@ -1439,6 +1440,7 @@ if(hero && topNav){
 
     const TRANSPORT_WARNING_DURATION = 1150;
     const TRANSPORT_SHRINK_DURATION = 920;
+    const TRANSPORT_RESET_WAVE_DURATION = 820;
 
     const TRANSPORT_CYCLE_MIN = 1000;
     const TRANSPORT_CYCLE_MAX = 3000;
@@ -2401,7 +2403,8 @@ if(hero && topNav){
             element.classList.remove(
                 'is-transport-warning',
                 'is-transport-expanded',
-                'is-transport-shrinking'
+                'is-transport-shrinking',
+                'is-transport-resetting'
             );
         });
 
@@ -2428,6 +2431,10 @@ if(hero && topNav){
 
             if(state === 'shrinking'){
                 element.classList.add('is-transport-shrinking');
+            }
+
+            if(state === 'resetting'){
+                element.classList.add('is-transport-resetting');
             }
 
         });
@@ -2537,6 +2544,16 @@ if(hero && topNav){
 
             if(!node || node.ring === 0) return;
 
+            if(node.id === currentNodeId){
+
+                node.renderSize = TRANSPORT_CELL_SIZE;
+
+                setTransportStateClass(node, null);
+
+                return;
+
+            }
+
             if(!node.transportState){
                 prepareTransportNode(node, bounds);
             }
@@ -2609,6 +2626,59 @@ if(hero && topNav){
         });
 
         updateRenderedNodePositions();
+
+    }
+
+    function triggerTransportResetWave(){
+
+        if(!root.classList.contains('fx-transport')) return;
+
+        if(transportResetTimer){
+            clearTimeout(transportResetTimer);
+            transportResetTimer = null;
+        }
+
+        const now = performance.now();
+
+        transportCandidateIds.forEach(id => {
+
+            const node = getNode(id);
+
+            if(!node || node.ring === 0) return;
+
+            /*
+                La casilla donde está el personaje no participa
+                del reinicio grupal.
+            */
+            if(node.id === currentNodeId){
+
+                node.renderSize = TRANSPORT_CELL_SIZE;
+
+                setTransportStateClass(node, null);
+
+                return;
+
+            }
+
+            /*
+                Usamos el mismo estado del teletransporte individual.
+                No agrandamos aquí.
+                Solo avisamos.
+            */
+            node.transportState = 'warning';
+            node.transportWarningStart = now;
+
+            node.transportVX = 0;
+            node.transportVY = 0;
+
+            node.renderSize = TRANSPORT_CELL_SIZE;
+
+            setTransportStateClass(node, 'warning');
+
+        });
+
+        updateRenderedNodePositions();
+        updateCells();
 
     }
 
@@ -2746,10 +2816,16 @@ if(hero && topNav){
             transportLandingTimer = null;
         }
 
+        if(transportResetTimer){
+            clearTimeout(transportResetTimer);
+            transportResetTimer = null;
+        }
+
         root.classList.remove(
-            'is-transport-preparing',
-            'is-transport-ready',
-            'is-transport-landing'
+            'is-transport-warning',
+            'is-transport-expanded',
+            'is-transport-shrinking',
+            'is-transport-resetting'
         );
 
         transportCandidateIds = [];
@@ -4836,8 +4912,10 @@ if(hero && topNav){
         const currentNode = getNode(currentNodeId);
 
         if(root.classList.contains('fx-transport')){
+
             flashTransportLanding(currentNode);
-            pickTransportCandidates();
+            triggerTransportResetWave();
+
         }
 
         applyColorEvent(currentNode);
