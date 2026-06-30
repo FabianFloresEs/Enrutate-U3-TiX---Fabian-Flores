@@ -1,144 +1,33 @@
 /* ================================= */
-/* GALERÍA CARRUSEL */
+/* GALERÍA ABIERTA + LIGHTBOX */
 /* ================================= */
 
 const gallerySlides = document.querySelectorAll('.gallery-slide');
-const galleryPrevBtn = document.querySelector('.gallery-btn--prev');
-const galleryNextBtn = document.querySelector('.gallery-btn--next');
-const galleryDotsContainer = document.querySelector('.gallery-dots');
+const aboutCardImages = document.querySelectorAll('.about-card img');
 
 const galleryLightbox = document.getElementById('galleryLightbox');
 const galleryLightboxImg = document.querySelector('.gallery-lightbox-img');
 const galleryLightboxClose = document.querySelector('.gallery-lightbox-close');
 
-let currentGallerySlide = 0;
-let galleryAutoplay = null;
+function openGalleryLightboxFromImage(image){
 
-function getCircularIndex(index, total){
-    return (index + total) % total;
-}
-
-function showGallerySlide(index){
-
-    if(!gallerySlides.length) return;
-
-    const total = gallerySlides.length;
-
-    currentGallerySlide = getCircularIndex(index, total);
-
-    gallerySlides.forEach((slide, slideIndex) => {
-
-        slide.classList.remove(
-            'is-active',
-            'is-prev',
-            'is-next',
-            'is-far-prev',
-            'is-far-next'
-        );
-
-        if(slideIndex === currentGallerySlide){
-            slide.classList.add('is-active');
-        }
-
-        if(slideIndex === getCircularIndex(currentGallerySlide - 1, total)){
-            slide.classList.add('is-prev');
-        }
-
-        if(slideIndex === getCircularIndex(currentGallerySlide + 1, total)){
-            slide.classList.add('is-next');
-        }
-
-        if(slideIndex === getCircularIndex(currentGallerySlide - 2, total)){
-            slide.classList.add('is-far-prev');
-        }
-
-        if(slideIndex === getCircularIndex(currentGallerySlide + 2, total)){
-            slide.classList.add('is-far-next');
-        }
-
-    });
-
-    updateGalleryDots();
-}
-
-function createGalleryDots(){
-
-    if(!galleryDotsContainer || !gallerySlides.length) return;
-
-    galleryDotsContainer.innerHTML = '';
-
-    gallerySlides.forEach((_, index) => {
-
-        const dot = document.createElement('button');
-
-        dot.classList.add('gallery-dot');
-        dot.type = 'button';
-        dot.setAttribute('aria-label', `Ver imagen ${index + 1}`);
-
-        dot.addEventListener('click', () => {
-            showGallerySlide(index);
-            restartGalleryAutoplay();
-        });
-
-        galleryDotsContainer.appendChild(dot);
-
-    });
-
-}
-
-function updateGalleryDots(){
-
-    if(!galleryDotsContainer) return;
-
-    const dots = galleryDotsContainer.querySelectorAll('.gallery-dot');
-
-    dots.forEach((dot, index) => {
-        dot.classList.toggle('is-active', index === currentGallerySlide);
-    });
-
-}
-
-function startGalleryAutoplay(){
-
-    stopGalleryAutoplay();
-
-    galleryAutoplay = setInterval(() => {
-        showGallerySlide(currentGallerySlide + 1);
-    }, 3800);
-
-}
-
-function stopGalleryAutoplay(){
-
-    if(galleryAutoplay){
-        clearInterval(galleryAutoplay);
-        galleryAutoplay = null;
-    }
-
-}
-
-function restartGalleryAutoplay(){
-
-    stopGalleryAutoplay();
-    startGalleryAutoplay();
-
-}
-
-function openGalleryLightbox(slide){
-
-    if(!galleryLightbox || !galleryLightboxImg) return;
-
-    const image = slide.querySelector('img');
-
-    if(!image) return;
-
-    stopGalleryAutoplay();
+    if(!galleryLightbox || !galleryLightboxImg || !image) return;
 
     galleryLightboxImg.src = image.src;
     galleryLightboxImg.alt = image.alt;
 
     galleryLightbox.classList.add('is-open');
     galleryLightbox.setAttribute('aria-hidden', 'false');
+
+}
+
+function openGalleryLightbox(slide){
+
+    if(!slide) return;
+
+    const image = slide.querySelector('img');
+
+    openGalleryLightboxFromImage(image);
 
 }
 
@@ -152,53 +41,24 @@ function closeGalleryLightbox(){
     galleryLightboxImg.src = '';
     galleryLightboxImg.alt = '';
 
-    startGalleryAutoplay();
-
 }
 
-if(gallerySlides.length){
+gallerySlides.forEach(slide => {
 
-    createGalleryDots();
-    showGallerySlide(0);
-    startGalleryAutoplay();
-
-    gallerySlides.forEach((slide, index) => {
-
-        slide.addEventListener('click', () => {
-
-            const wasActive = index === currentGallerySlide;
-
-            if(wasActive){
-                openGalleryLightbox(slide);
-                return;
-            }
-
-            showGallerySlide(index);
-            restartGalleryAutoplay();
-
-        });
-
+    slide.addEventListener('click', () => {
+        openGalleryLightbox(slide);
     });
 
-}
+});
 
-if(galleryPrevBtn){
+aboutCardImages.forEach(image => {
 
-    galleryPrevBtn.addEventListener('click', () => {
-        showGallerySlide(currentGallerySlide - 1);
-        restartGalleryAutoplay();
+    image.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openGalleryLightboxFromImage(image);
     });
 
-}
-
-if(galleryNextBtn){
-
-    galleryNextBtn.addEventListener('click', () => {
-        showGallerySlide(currentGallerySlide + 1);
-        restartGalleryAutoplay();
-    });
-
-}
+});
 
 if(galleryLightbox){
 

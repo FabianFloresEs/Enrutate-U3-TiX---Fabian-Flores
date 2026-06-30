@@ -4,6 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Esta es tu ruta</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
     :root{
         --bg:#ECECEC;
@@ -60,15 +65,15 @@
     .result-header{
         width:100%;
         display:grid;
-        grid-template-columns:52px 1fr 52px;
+        grid-template-columns:42px 1fr 42px;
         align-items:center;
-        gap:12px;
-        padding-top:4px;
+        gap:8px;
+        padding-top:8px;
     }
 
     .result-badge{
-        width:52px;
-        height:52px;
+        width:42px;
+        height:42px;
         border-radius:0;
         display:flex;
         align-items:center;
@@ -84,11 +89,13 @@
     .result-title{
         margin:0;
         text-align:center;
-        font-weight:900;
-        font-size:clamp(2.25rem, 7vw, 3.3rem);
-        line-height:.9;
-        letter-spacing:-.04em;
+        font-family:'Poppins', sans-serif;
+        font-weight:500;
+        font-size:clamp(1.55rem, 6.2vw, 2.05rem);
+        line-height:.95;
+        letter-spacing:-.025em;
         color:var(--ink);
+        white-space:nowrap;
     }
 
     .result-bar{
@@ -294,7 +301,7 @@
                 </svg>
             </div>
 
-            <h1 class="result-title">Esta es<br>tu ruta</h1>
+            <h1 class="result-title">Esta es tu ruta</h1>
 
             <div class="result-badge" aria-hidden="true">
                 <svg viewBox="0 0 64 64">
@@ -411,19 +418,29 @@
         wrap.className = 'result-cell-chip';
 
         const colors = COLOR_MAP[color] || COLOR_MAP.blue;
-        const centerColor = 'transparent';
+        const maskId = `cell-hole-${color}-${Math.random().toString(36).slice(2)}`;
 
         const octagonPoints = '52.2,39.2 39.2,52.2 20.8,52.2 7.8,39.2 7.8,20.8 20.8,7.8 39.2,7.8 52.2,20.8';
         const starPoints = '30.0,6.0 35.7,16.3 47.0,13.0 43.7,24.3 54.0,30.0 43.7,35.7 47.0,47.0 35.7,43.7 30.0,54.0 24.3,43.7 13.0,47.0 16.3,35.7 6.0,30.0 16.3,24.3 13.0,13.0 24.3,16.3';
 
-        const shape = color === 'red'
-            ? `<polygon points="${starPoints}" fill="${colors.fill}"></polygon>`
-            : `<polygon points="${octagonPoints}" fill="${colors.fill}"></polygon>`;
+        const points = color === 'red'
+            ? starPoints
+            : octagonPoints;
 
         wrap.innerHTML = `
             <svg viewBox="0 0 60 60" aria-hidden="true">
-                ${shape}
-                <circle cx="30" cy="30" r="8.5" fill="${centerColor}"></circle>
+                <defs>
+                    <mask id="${maskId}">
+                        <rect x="0" y="0" width="60" height="60" fill="white"></rect>
+                        <circle cx="30" cy="30" r="8.5" fill="black"></circle>
+                    </mask>
+                </defs>
+
+                <polygon
+                    points="${points}"
+                    fill="${colors.fill}"
+                    mask="url(#${maskId})"
+                ></polygon>
             </svg>
         `;
 
@@ -547,6 +564,64 @@
         ctx.clip();
 
         paintResultBackground(ctx);
+
+        ctx.restore();
+
+    }
+
+    function drawTitleBadge(ctx, cx, cy, size){
+
+        ctx.save();
+
+        ctx.beginPath();
+
+        for(let i = 0; i < 8; i++){
+
+            const angle = Math.PI / 8 + i * Math.PI / 4;
+            const x = cx + Math.cos(angle) * size;
+            const y = cy + Math.sin(angle) * size;
+
+            if(i === 0){
+                ctx.moveTo(x, y);
+            }else{
+                ctx.lineTo(x, y);
+            }
+
+        }
+
+        ctx.closePath();
+        ctx.fillStyle = '#f2d51d';
+        ctx.fill();
+
+        const outerR = size * .72;
+        const innerR = size * .34;
+
+        ctx.beginPath();
+
+        for(let i = 0; i < 16; i++){
+
+            const angle = -Math.PI / 2 + (Math.PI / 8) * i;
+            const r = i % 2 === 0 ? outerR : innerR;
+
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+
+            if(i === 0){
+                ctx.moveTo(x, y);
+            }else{
+                ctx.lineTo(x, y);
+            }
+
+        }
+
+        ctx.closePath();
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * .20, 0, Math.PI * 2);
+        ctx.fillStyle = '#f2d51d';
+        ctx.fill();
 
         ctx.restore();
 
@@ -763,13 +838,15 @@
 
         paintResultBackground(ctx);
 
+        drawTitleBadge(ctx, 104, 132, 30);
+        drawTitleBadge(ctx, W - 104, 132, 30);
+
         ctx.textAlign = 'center';
         ctx.fillStyle = '#1f2025';
-        ctx.font = '900 82px system-ui, sans-serif';
-        ctx.fillText('Esta es', W / 2, 120);
-        ctx.fillText('tu ruta', W / 2, 202);
+        ctx.font = '500 48px "Poppins", sans-serif';
+        ctx.fillText('Esta es tu ruta', W / 2, 150);
 
-        drawCellBar(ctx, 28, 252, W - 56);
+        drawCellBar(ctx, 28, 248, W - 56);
 
         ctx.fillStyle = '#ece8dc';
         drawRoundedRect(ctx, 54, 350, W - 108, 590, 72);
@@ -781,7 +858,7 @@
 
         ctx.fillStyle = '#1f2025';
         ctx.textAlign = 'center';
-        ctx.font = '700 30px system-ui, sans-serif';
+        ctx.font = '800 30px system-ui, sans-serif';
 
         drawMultilineText(
             ctx,
@@ -801,7 +878,7 @@
         ctx.font = '500 18px system-ui, sans-serif';
         ctx.fillText('Desarrollado por Fabián Flores Estay.', W / 2, 1416);
 
-        ctx.save();75
+        ctx.save();
         ctx.globalAlpha = .58;
         ctx.font = 'italic 500 18px system-ui, sans-serif';
         ctx.fillText('Gracias por recorrer y probar esta Interfaz Expresiva.', W / 2, 1454);
@@ -1082,7 +1159,10 @@
     const resultData = getHashData();
 
     renderRoute(resultData);
-    generateResultPng(resultData);
+
+    document.fonts.ready.then(() => {
+        generateResultPng(resultData);
+    });
 
 })();
 </script>

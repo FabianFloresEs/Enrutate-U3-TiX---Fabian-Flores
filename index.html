@@ -80,6 +80,10 @@
 
         </div>
 
+        <a class="hero-cta-button final-cta-button" href="index.experimentacion.html">
+            Descubre la Interfaz Expresiva
+        </a>
+
     </header>
 
     <!-- ========================= -->
@@ -89,21 +93,22 @@
     <section class="intro">
 
         <div class="intro-container">
-            <p>
-                Enrútate es un juego dinámico para 3 a 6 jugadores, diseñado para encontrar diversión en cada recorrido del tablero. En partidas de aproximadamente 20 a 35 minutos, los jugadores avanzan consiguiendo puntos para poder coronarse en el centro como ganador.
-            </p>
 
-            <p>
-                Durante la partida, cada decisión puede cambiar el rumbo del juego: perder puntos, quedar sin una ruta de regreso o mover el tablero en el momento preciso puede transformar completamente la experiencia. Los jugadores deberán planificar sus recorridos, adaptarse a los cambios y mantenerse atentos para no quedar fuera de camino.
-            </p>
+            <div class="intro-copy">
+                <p>
+                    Enrútate es un juego de mesa centrado en el recorrido, la toma de decisiones y la transformación del tablero. Más que seguir un trayecto fijo, cada partida propone una experiencia cambiante: las rutas se abren, se alteran o se pierden según las acciones de los jugadores.
+                </p>
 
-            <p>
-                Con una dinámica rápida y cambiante, Enrútate fomenta la interacción, la estrategia y la improvisación entre todos los jugadores, convirtiendo cada partida en una experiencia distinta.
-            </p>
+                <p class="intro-highlight">
+                    <span>Avanzar no significa solo moverse por casillas,</span>
+                    <span>sino leer un sistema que se reorganiza constantemente.</span>
+                </p>
+            </div>
 
-            <p class="intro-highlight">
-                ¡Aprovecha de mover el tablero y encuentra tu ruta hacia la victoria!
-            </p>
+            <figure class="intro-media">
+                <img src="assets/Intro.FuncinoamientoJuego.png" alt="Funcionamiento del juego Enrútate">
+            </figure>
+
         </div>
 
     </section>
@@ -119,43 +124,63 @@
             <h2>Galería</h2>
         </div>
 
-        <div class="gallery-carousel" id="galleryCarousel">
+        <div class="gallery-grid" id="galleryGrid">
 
-        <button class="gallery-btn gallery-btn--prev" type="button" aria-label="Imagen anterior">
-            &#10094;
-        </button>
+            <figure class="gallery-slide gallery-slide--wide">
+                <img src="assets/galeria.06.Cartas.png" alt="Mazos de cartas de Enrútate">
 
-        <div class="gallery-stage">
+                <figcaption>
+                    <strong>Cartas del juego</strong>
+                    <span>Mazos de bonificación, desafío y modificación del tablero.</span>
+                </figcaption>
+            </figure>
 
-            <figure class="gallery-slide" data-index="0">
+            <figure class="gallery-slide">
                 <img src="assets/galeria.01.CajaEnrútate.png" alt="Caja de Enrútate">
+
+                <figcaption>
+                    <strong>Caja del juego</strong>
+                    <span>Presentación exterior del juego de mesa Enrútate.</span>
+                </figcaption>
             </figure>
 
-            <figure class="gallery-slide" data-index="1">
-                <img src="assets/galeria.02.ContenidoJuego.png" alt="Contenido del juego Enrútate">
-            </figure>
-
-            <figure class="gallery-slide" data-index="2">
-                <img src="assets/galeria.03.Tablero.png" alt="Tablero de Enrútate">
-            </figure>
-
-            <figure class="gallery-slide" data-index="3">
-                <img src="assets/galeria.04.TableroVistaSuperior.png" alt="Vista superior del tablero Enrútate">
-            </figure>
-
-            <figure class="gallery-slide" data-index="4">
+            <figure class="gallery-slide">
                 <img src="assets/galeria.05.CajaReverso.png" alt="Reverso de la caja de Enrútate">
+
+                <figcaption>
+                    <strong>Reverso de caja</strong>
+                    <span>Información general, objetivo y reglas principales del juego.</span>
+                </figcaption>
+            </figure>
+
+            <figure class="gallery-slide gallery-slide--wide">
+                <img src="assets/galeria.03.acercamiento.Tablero.png" alt="Detalle del tablero de Enrútate">
+
+                <figcaption>
+                    <strong>Detalle del tablero</strong>
+                    <span>Acercamiento a las casillas, colores y transparencias del recorrido.</span>
+                </figcaption>
+            </figure>
+
+            <figure class="gallery-slide gallery-slide--wide">
+                <img src="assets/galeria.04.TableroVistaSuperior.png" alt="Vista superior del tablero de Enrútate">
+
+                <figcaption>
+                    <strong>Vista superior</strong>
+                    <span>Lectura general del tablero, sus rutas y piezas móviles.</span>
+                </figcaption>
+            </figure>
+
+            <figure class="gallery-slide gallery-slide--wide">
+                <img src="assets/galeria.02.ContenidoJuego.png" alt="Contenido del juego Enrútate">
+
+                <figcaption>
+                    <strong>Contenido del juego</strong>
+                    <span>Piezas, tablero, cartas y componentes principales.</span>
+                </figcaption>
             </figure>
 
         </div>
-
-        <button class="gallery-btn gallery-btn--next" type="button" aria-label="Imagen siguiente">
-            &#10095;
-        </button>
-
-        <div class="gallery-dots" aria-label="Indicadores de galería"></div>
-
-    </div>
 
 </section>
 
@@ -210,11 +235,13 @@
                     </p>
                 </div>
 
-                <div class="about-summary">
-                    <span>3 a 6 jugadores</span>
-                    <span>20 a 35 minutos</span>
-                    <span>Azar + estrategia</span>
-                </div>
+                <aside class="about-objective-aside" aria-label="Datos principales del juego">
+                    <div class="about-summary">
+                        <span>3 a 6 jugadores</span>
+                        <span>20 a 35 minutos</span>
+                        <span>Azar + estrategia</span>
+                    </div>
+                </aside>
 
             </article>
 
@@ -226,25 +253,37 @@
                     <p class="about-kicker">Preparar</p>
 
                     <h3>
-                        Ordena las cartas, elige tu pieza y comienza desde una casilla amarilla.
+                        Construye el tablero, organiza los mazos y elige tu pieza.
                     </h3>
 
                     <p>
-                        Separa las cartas por color y baraja cada mazo por separado. Luego, ubícalos en su respectivo lugar del tablero.
+                        El tablero se construye a partir de sus piezas, comenzando desde el centro hacia afuera. Primero se ubica la pieza central, luego se incorporan los anillos del recorrido y finalmente se cierra el tablero con un pequeño marco cuadrado.
                     </p>
 
                     <p>
-                        Cada jugador escoge una pieza representante e inicia la partida desde una casilla amarilla.
+                        Debes separar las cartas por color: rojo, verde y azul. Luego, baraja cada mazo por separado y posiciónalos en su respectivo lugar del tablero.
+                    </p>
+
+                    <p>
+                        Cada jugador elegirá su pieza representante y la insertará en una casilla amarilla de inicio.
                     </p>
                 </div>
 
-                <figure class="about-image">
-                    <img src="assets/A.Juego.01.PrepararTablero.png" alt="Cómo preparar el juego Enrútate">
+                <figure class="about-image about-image--video">
+                    <video 
+                        src="assets/EnsambleTableroEnrutate.vF.mp4"
+                        autoplay
+                        muted
+                        loop
+                        playsinline
+                        preload="metadata"
+                        aria-label="Video de ensamble del tablero Enrútate">
+                    </video>
                 </figure>
 
             </article>
 
-            <article id="about-avanzar" class="about-block about-block--media about-block--reverse">
+            <article id="about-avanzar" class="about-block about-block--media">
 
                 <span class="about-number">03</span>
 
@@ -278,11 +317,24 @@
                     <p class="about-kicker">Casillas</p>
 
                     <h3>
-                        El tablero se organiza por rutas, colores y decisiones.
+                        Cada casilla activa una acción distinta al final del turno.
                     </h3>
 
                     <p>
-                        El centro funciona como punto de partida y de final. Desde ahí, las rutas periféricas conducen a casillas especiales que pueden beneficiar, perjudicar o modificar el recorrido.
+                        Después de avanzar tres movimientos, el jugador debe sacar una carta según la casilla donde terminó. Las cartas pueden usarse al inicio o al final de un turno, o guardarse para más adelante. No deben mostrarse, pero sí se debe anunciar cuando se recibe daño.
+                    </p>
+
+                    <ul class="about-cell-list">
+                        <li><strong>Malvada:</strong> roba una carta roja y realiza su acción. No siempre perjudica al jugador que la saca.</li>
+                        <li><strong>Bonificación:</strong> roba una carta verde para conseguir puntos.</li>
+                        <li><strong>Doble bonificación:</strong> roba dos cartas verdes.</li>
+                        <li><strong>Modificación:</strong> roba una carta azul para intervenir el tablero.</li>
+                        <li><strong>Inicio:</strong> punto desde donde comienzan los jugadores.</li>
+                        <li><strong>Final:</strong> casilla de cierre para quien vuelve al centro con los puntos necesarios.</li>
+                    </ul>
+
+                    <p class="about-cell-note">
+                        Cada carta utilizada debe devolverse al final de su mazo.
                     </p>
                 </div>
 
@@ -350,12 +402,32 @@
         </div>
         
         <div class="pix-intro">
-            <p>
-                La Partitura de Interacción fue el punto de partida para reconocer aquello que hacía particular la experiencia de Enrútate. A través de ella se hizo visible cómo los jugadores no solo avanzaban por el tablero, sino que leían sus cambios, descubrían nuevas posibilidades y reorganizaban sus decisiones a partir de piezas móviles, transparencias y obstáculos. Desde esta observación surge el fundamento de la experimentación digital:
-            </p>
-        </div>
 
-        <br>
+            <article class="pix-info-card">
+                <span class="pix-info-label">Qué es</span>
+
+                <h3>
+                    Una forma de graficar la experiencia.
+                </h3>
+
+                <p>
+                    La PiX es una Partitura de Interacción que permite ordenar una experiencia paso a paso: lo que hace el usuario, lo que ocurre en la acción y cómo responde el sistema.
+                </p>
+            </article>
+
+            <article class="pix-info-card">
+                <span class="pix-info-label">Qué permitió observar</span>
+
+                <h3>
+                    El recorrido como una lectura cambiante.
+                </h3>
+
+                <p>
+                    En Enrútate, la PiX mostró que el juego no ocurre de manera lineal. Cada recorrido abre decisiones, modifica el tablero y cambia la forma en que los jugadores leen el espacio.
+                </p>
+            </article>
+
+        </div>
 
         <div class="pix-container">
 
@@ -384,19 +456,71 @@
             <h2>Interpretación Digital</h2>
         </div>
 
-        <div class="interpretacion-texto">
+        <div class="interpretacion-layout">
 
-            <p>
-                Este proyecto nace del análisis del juego de mesa Enrútate y de su Partitura de Interacción, donde se observa que la experiencia no depende únicamente de avanzar por el tablero, sino de leer un recorrido que cambia constantemente.
-            </p>
+            <div class="interpretacion-texto">
 
-            <p>
-                La propuesta toma como fundamento la tensión entre lo visible y lo modificable. En el juego físico, las piezas transparentes permiten intervenir el tablero, mientras que las piezas opacas fijan posiciones, cuerpos y obstáculos. Esta relación material transforma la ruta en una lectura por capas: algunas posibilidades se muestran, otras se ocultan y otras aparecen solo cuando el jugador modifica el sistema.
-            </p>
+                <p class="interpretacion-kicker">
+                    Desarrollo de la Interfaz Expresiva
+                </p>
 
-            <p>
-                Más que traducir literalmente el tablero, la experimentación digital busca explorar cómo una interfaz puede revelar progresivamente sus recorridos. <strong>El movimiento deja de ser solo desplazamiento y se convierte en una forma de descubrir, reorganizar y comprender el espacio.</strong>
-            </p>
+                <p>
+                    Enrútate no se traduce a la pantalla como una copia del tablero físico. Su paso a lo digital nace de una lectura de sus comportamientos: recorrer, decidir y modificar. Por eso, la Interfaz Expresiva entiende el recorrido como un sistema activo, donde cada avance implica elegir, alterar y volver a interpretar un espacio que cambia.
+                </p>
+
+                <p>
+                    Desde esa lógica, la interacción no se reduce a llegar a un punto final. Cada acción produce una alteración visible en el tablero: aparecen nuevas rutas, cambian los patrones, surgen interferencias y se transforma la relación del usuario con el espacio. <strong>Así, el movimiento deja de ser solo desplazamiento y se convierte en una forma de descubrir, reorganizar y comprender el sistema.</strong>
+                </p>
+
+            </div>
+
+            <aside class="interpretacion-panel" aria-label="Síntesis visual de la interpretación digital">
+
+                <div class="interpretacion-panel-top">
+
+                    <span class="interpretacion-panel-icon"></span>
+
+                    <div class="interpretacion-panel-heading">
+                        <h3>Lectura del sistema</h3>
+
+                        <p>
+                            El recorrido digital se entiende como una secuencia<br>
+                            de acciones que permite recorrer, modificar y releer el espacio.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="interpretacion-panel-flow">
+
+                    <article class="interpretacion-step interpretacion-step--blue">
+                        <h4>Recorrer</h4>
+                        <p>
+                            El usuario avanza por un tablero que no permanece fijo.
+                        </p>
+                    </article>
+
+                    <span class="interpretacion-arrow interpretacion-arrow--blue">→</span>
+
+                    <article class="interpretacion-step interpretacion-step--green">
+                        <h4>Modificar</h4>
+                        <p>
+                            Cada acción altera rutas, patrones o condiciones visibles.
+                        </p>
+                    </article>
+
+                    <span class="interpretacion-arrow interpretacion-arrow--green">→</span>
+
+                    <article class="interpretacion-step interpretacion-step--red">
+                        <h4>Leer</h4>
+                        <p>
+                            El espacio debe volver a interpretarse después de cada cambio.
+                        </p>
+                    </article>
+
+                </div>
+
+            </aside>
 
         </div>
 
@@ -409,7 +533,7 @@
     <section class="final-cta">
 
         <a class="final-cta-button" href="index.experimentacion.html">
-            Mira la experimentación digital del juego
+            Descubre la Interfaz Expresiva
         </a>
 
     </section>
@@ -420,35 +544,99 @@
 
     <footer class="site-footer">
 
-        <div class="footer-logos">
+        <div class="footer-inner">
 
-            <div class="footer-logo-placeholder">
-                <img src="assets/LogoPUCVnegro.svg" alt="Logo Pontificia Universidad Católica de Valparaíso">
+            <div class="footer-main">
+
+                <div class="footer-logos">
+
+                    <div class="footer-logo-placeholder">
+                        <img src="assets/LogoPUCVnegro.svg" alt="Logo Pontificia Universidad Católica de Valparaíso">
+                    </div>
+
+                    <div class="footer-logo-placeholder">
+                        <img src="assets/LogoEadNegro.svg" alt="Logo Escuela de Arquitectura y Diseño PUCV">
+                    </div>
+
+                </div>
+
+                <div class="footer-text">
+                    <p>
+                        La presente página fue elaborada por 
+                        <a class="footer-inline-link" href="https://wiki.ead.pucv.cl/Fabi%C3%A1n_Flores" target="_blank" rel="noopener noreferrer">Fabián Flores Estay</a>, 
+                        para el 
+                        <a class="footer-inline-link" href="https://wiki.ead.pucv.cl/Taller_de_Dise%C3%B1o_de_Interacci%C3%B3n_2026" target="_blank" rel="noopener noreferrer">Taller de Diseño de Interacción</a>.
+                        Se elaboró a partir del juego de mesa 
+                        <a class="footer-inline-link" href="https://wiki.ead.pucv.cl/Enr%C3%BAtate" target="_blank" rel="noopener noreferrer">Enrútate</a>, 
+                        creado para el mismo taller.
+                    </p>
+
+                    <p>
+                        Escuela de Arquitectura y Diseño, Pontificia Universidad Católica de Valparaíso.
+                    </p>
+
+                    <p>
+                        Junio de 2026.
+                    </p>
+                </div>
+
             </div>
 
-            <div class="footer-logo-placeholder">
-                <img src="assets/LogoEadNegro.svg" alt="Logo Escuela de Arquitectura y Diseño PUCV">
-            </div>
+            <aside class="footer-tools" aria-label="Programas usados en el proyecto">
 
-        </div>
+                <p class="footer-tools-title">
+                    Herramientas usadas
+                </p>
 
-        <div class="footer-text">
-            <p>
-                La presente página fue elaborada por Fabián Flores Estay, para el Taller de Diseño de Interacción.
-                Se elaboró a partir del juego de mesa Enrútate, creado para el mismo taller.
-            </p>
+                <div class="footer-tools-list">
 
-            <p>
-                Escuela de Arquitectura y Diseño, Pontificia Universidad Católica de Valparaíso.
-            </p>
+                    <div class="footer-tool">
+                        <img src="assets/Figma-logo.svg" alt="Figma">
+                        <span>Figma</span>
+                    </div>
 
-            <p>
-                Junio de 2026.
-            </p>
+                    <div class="footer-tool">
+                        <img src="assets/ChatGPT-logo.svg" alt="Chat GPT con razonamiento Alto">
+                        <span>Chat GPT con razonamiento Alto</span>
+                    </div>
+
+                    <div class="footer-tool">
+                        <img src="assets/Visual-Studio-Code-logo.svg" alt="Visual Studio Code">
+                        <span>Visual Studio Code</span>
+                    </div>
+
+                    <div class="footer-tool">
+                        <img src="assets/Github-logo.svg" alt="Github Desktop">
+                        <span>Github Desktop</span>
+                    </div>
+
+                </div>
+                <div class="footer-teachers">
+
+                    <p class="footer-tools-title">
+                        Profesoras encargadas
+                    </p>
+
+                    <div class="footer-teachers-list">
+
+                        <a href="https://wiki.ead.pucv.cl/Katherine_Exss" target="_blank" rel="noopener noreferrer">
+                            Katherine Exss Cid
+                        </a>
+
+                        <a href="https://wiki.ead.pucv.cl/Javiera_Ruiz" target="_blank" rel="noopener noreferrer">
+                            Javiera Ruiz Mayer
+                        </a>
+
+                    </div>
+
+                </div>
+            </aside>
+
         </div>
 
     </footer>
-
+    
     <script src="script.js"></script>
+    
 </body>
 </html>
